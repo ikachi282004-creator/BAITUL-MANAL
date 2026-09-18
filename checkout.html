@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Progressive Web App Meta -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#c5a880" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Baitul Manal" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <title>Checkout | BAITUL MANAL Kuwait</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/checkout.css" />
+</head>
+<body>
+
+  <!-- Minimalist Luxury Checkout Header -->
+  <header class="checkout-header">
+    <div class="container checkout-header__inner">
+      <a href="cart.html" class="checkout-back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>Return to Bag</span>
+      </a>
+
+      <a href="index.html" class="brand-logo">
+        <span class="brand-logo__primary">BAITUL MANAL</span>
+        <span class="brand-logo__sub">FAHAHEEL • KUWAIT</span>
+      </a>
+
+      <div class="checkout-secure-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span>256-Bit Encrypted</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Checkout Workflow -->
+  <main class="checkout-main">
+    <div class="container checkout-grid">
+      
+      <!-- Left Column: Checkout Multi-Step Form -->
+      <section class="checkout-forms">
+        <form id="checkoutForm" novalidate>
+
+          <!-- Step 1: Customer Identification -->
+          <div class="checkout-card" id="stepCustomer">
+            <div class="checkout-card__header">
+              <span class="step-num">01</span>
+              <div>
+                <h2 class="step-title">Customer Contact</h2>
+                <p class="step-sub">We will send dispatch alerts and digital invoices here.</p>
+              </div>
+            </div>
+
+            <div class="form-row form-row--2">
+              <div class="form-group">
+                <label for="custFirstName">First Name <span class="required">*</span></label>
+                <input type="text" id="custFirstName" placeholder="e.g. Fatima" required autocomplete="given-name">
+                <span class="field-error" id="errFirstName"></span>
+              </div>
+              <div class="form-group">
+                <label for="custLastName">Last Name <span class="required">*</span></label>
+                <input type="text" id="custLastName" placeholder="e.g. Al-Sabah" required autocomplete="family-name">
+                <span class="field-error" id="errLastName"></span>
+              </div>
+            </div>
+
+            <div class="form-row form-row--2">
+              <div class="form-group">
+                <label for="custPhone">Kuwait Mobile Number <span class="required">*</span></label>
+                <div class="phone-input-wrap">
+                  <span class="phone-prefix">🇰🇼 +965</span>
+                  <input type="tel" id="custPhone" placeholder="XXXXXXXX" maxlength="8" required autocomplete="tel">
+                </div>
+                <span class="field-help">8-digit mobile for courier WhatsApp notification</span>
+                <span class="field-error" id="errPhone"></span>
+              </div>
+              <div class="form-group">
+                <label for="custEmail">Email Address (Optional)</label>
+                <input type="email" id="custEmail" placeholder="yourname@domain.com" autocomplete="email">
+                <span class="field-help">For physical order PDF confirmation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Kuwait Specialized Address Matrix -->
+          <div class="checkout-card" id="stepAddress">
+            <div class="checkout-card__header">
+              <span class="step-num">02</span>
+              <div>
+                <h2 class="step-title">Kuwait Delivery Address</h2>
+                <p class="step-sub">Precise local coordinates for fast parcel dispatch.</p>
+              </div>
+            </div>
+
+            <div class="form-row form-row--2">
+              <div class="form-group">
+                <label for="custGovernorate">Governorate <span class="required">*</span></label>
+                <select id="custGovernorate" required>
+                  <option value="ahmadi" selected>Al Ahmadi (Fast Hub - KD 1.500)</option>
+                  <option value="capital">Capital / Al Asimah (KD 2.000)</option>
+                  <option value="hawally">Hawally & Salmiya (KD 2.000)</option>
+                  <option value="farwaniya">Farwaniya & Khaitan (KD 2.000)</option>
+                  <option value="mubarak">Mubarak Al-Kabeer (KD 2.000)</option>
+                  <option value="jahra">Al Jahra & Suburbs (KD 2.500)</option>
+                </select>
+                <span class="field-error" id="errGovernorate"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="custArea">Area / District <span class="required">*</span></label>
+                <input type="text" id="custArea" placeholder="e.g. Fahaheel, Salmiya, Jabriya" required>
+                <span class="field-error" id="errArea"></span>
+              </div>
+            </div>
+
+            <div class="form-row form-row--3">
+              <div class="form-group">
+                <label for="custBlock">Block <span class="required">*</span></label>
+                <input type="text" id="custBlock" placeholder="e.g. 4" required>
+                <span class="field-error" id="errBlock"></span>
+              </div>
+              <div class="form-group">
+                <label for="custStreet">Street <span class="required">*</span></label>
+                <input type="text" id="custStreet" placeholder="e.g. Dabous St." required>
+                <span class="field-error" id="errStreet"></span>
+              </div>
+              <div class="form-group">
+                <label for="custAvenue">Jaddah / Avenue</label>
+                <input type="text" id="custAvenue" placeholder="e.g. Ave 2 (optional)">
+              </div>
+            </div>
+
+            <div class="form-row form-row--2">
+              <div class="form-group">
+                <label for="custHouse">Building / House No. <span class="required">*</span></label>
+                <input type="text" id="custHouse" placeholder="e.g. House 12" required>
+                <span class="field-error" id="errHouse"></span>
+              </div>
+              <div class="form-group">
+                <label for="custFlat">Floor / Flat / Unit</label>
+                <input type="text" id="custFlat" placeholder="e.g. Floor 2, Flat 4 (optional)">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="custNotes">Special Courier Instructions</label>
+              <textarea id="custNotes" rows="2" placeholder="e.g. Ring the bell, leave at reception, or call on arrival..."></textarea>
+            </div>
+          </div>
+
+          <!-- Step 3: Payment Method Matrix -->
+          <div class="checkout-card" id="stepPayment">
+            <div class="checkout-card__header">
+              <span class="step-num">03</span>
+              <div>
+                <h2 class="step-title">Payment Method</h2>
+                <p class="step-sub">Select your preferred Kuwait transaction gateway.</p>
+              </div>
+            </div>
+
+            <div class="payment-methods-grid">
+              <!-- Method 1: K-Net Local Debit -->
+              <label class="pay-method-card active" for="payKnet">
+                <input type="radio" name="payMethod" id="payKnet" value="knet" checked>
+                <div class="pay-method-card__head">
+                  <div class="pay-method-info">
+                    <span class="pay-title">K-Net Local Debit Card</span>
+                    <span class="pay-desc">Immediate checkout via Kuwait Debit Cards</span>
+                  </div>
+                  <span class="pay-badge pay-badge--knet">K-NET</span>
+                </div>
+                <div class="pay-method-details" id="knetDetails">
+                  <div class="knet-mock-box" style="padding: 12px; background: #faf8f5; border-radius: 6px; margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                    <span class="knet-icon">💳</span>
+                    <p style="margin: 0; font-size: 0.8rem; color: #5a5146;">You will complete your verified PIN entry through the secure K-Net gateway portal.</p>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Method 2: Credit / Debit Card -->
+              <label class="pay-method-card" for="payCard">
+                <input type="radio" name="payMethod" id="payCard" value="card">
+                <div class="pay-method-card__head">
+                  <div class="pay-method-info">
+                    <span class="pay-title">Credit Card</span>
+                    <span class="pay-desc">Visa, MasterCard, or Amex</span>
+                  </div>
+                  <div class="pay-badge-group">
+                    <span class="pay-badge">VISA</span>
+                    <span class="pay-badge">MC</span>
+                  </div>
+                </div>
+                <div class="pay-method-details" id="cardDetails" style="display: none; margin-top: 10px;">
+                  <div class="mock-card-fields" style="display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" placeholder="Cardholder Name" class="mock-input" style="width: 100%; padding: 8px; border: 1px solid #d6cbba; border-radius: 4px;">
+                    <input type="text" placeholder="Card Number (•••• •••• •••• ••••)" class="mock-input" style="width: 100%; padding: 8px; border: 1px solid #d6cbba; border-radius: 4px;">
+                    <div class="mock-card-row" style="display: flex; gap: 8px;">
+                      <input type="text" placeholder="MM / YY" class="mock-input" style="flex: 1; padding: 8px; border: 1px solid #d6cbba; border-radius: 4px;">
+                      <input type="password" placeholder="CVV" maxlength="4" class="mock-input" style="flex: 1; padding: 8px; border: 1px solid #d6cbba; border-radius: 4px;">
+                    </div>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Method 3: Cash On Delivery -->
+              <label class="pay-method-card" for="payCod">
+                <input type="radio" name="payMethod" id="payCod" value="cod">
+                <div class="pay-method-card__head">
+                  <div class="pay-method-info">
+                    <span class="pay-title">Cash on Delivery (COD)</span>
+                    <span class="pay-desc">Pay upon courier arrival at your doorstep</span>
+                  </div>
+                  <span class="pay-badge pay-badge--cod">CASH</span>
+                </div>
+                <div class="pay-method-details" id="codDetails" style="display: none; margin-top: 10px;">
+                  <p class="cod-note" style="margin: 0; font-size: 0.8rem; color: #8c8173; background: #faf8f5; padding: 10px; border-radius: 6px;">
+                    Please prepare the exact amount in Kuwaiti Dinars (KWD) for our delivery driver.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- Right Column: Sticky Order Summary -->
+      <aside class="checkout-summary-sidebar">
+        <div class="checkout-summary-card">
+          <h3 class="summary-title">Order Summary (<span id="summaryItemCount">0</span>)</h3>
+
+          <!-- Dynamic Item Shelf -->
+          <div class="summary-items-list" id="summaryItemsList"></div>
+
+          <!-- Free Shipping Progress -->
+          <div class="summary-shipping-tier" id="summaryShippingTier">
+            <div class="shipping-tier-label" style="display: flex; justify-content: space-between; font-size: 0.76rem; margin-bottom: 6px;">
+              <span id="tierNoticeText">Add KD 20.000 for Free Delivery</span>
+              <span class="tier-status-pill" id="tierStatusPill" style="font-weight: 700; color: #27ae60;">FREE AT KD 20</span>
+            </div>
+            <div class="shipping-tier-bar" style="height: 5px; background: #eee; border-radius: 4px; overflow: hidden;">
+              <div class="shipping-tier-fill" id="tierFill" style="width: 0%; height: 100%; background: #27ae60; transition: width 0.3s;"></div>
+            </div>
+          </div>
+
+          <hr class="summary-divider" style="margin: 1.25rem 0; border: none; border-top: 1px solid rgba(214, 203, 186, 0.6);">
+
+          <!-- Price Calculation Rows -->
+          <div class="summary-calc-rows">
+            <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Subtotal</span>
+              <span class="summary-val" id="checkoutSubtotal">KD 0.000</span>
+            </div>
+            <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Kuwait Dispatch Rate</span>
+              <span class="summary-val" id="checkoutDelivery">KD 1.500</span>
+            </div>
+            <div class="summary-row summary-row--total" style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; border-top: 1.5px solid #181512; padding-top: 10px; margin-top: 8px;">
+              <span>Grand Total</span>
+              <span class="summary-val summary-val--grand" id="checkoutTotal">KD 0.000</span>
+            </div>
+
+            <!-- Single Master CTA Button -->
+            <button type="button" class="btn-place-order" id="placeOrderBtn" style="width: 100%; background: #181512; color: #ffffff; border: none; border-radius: 8px; padding: 16px 20px; margin: 1.25rem 0 1rem; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease;">
+              <span>Place Order & Pay</span>
+              <span id="btnPayAmount">KD 0.000</span>
+            </button>
+            <p style="font-size: 0.72rem; color: #8c8173; text-align: center; margin: 0 0 1rem;">
+              By placing your order, you agree to Baitul Manal's Terms and Refund Policy.
+            </p>
+          </div>
+
+          <!-- Luxury Assurances -->
+          <div class="summary-assurances" style="border-top: 1px dashed rgba(214,203,186,0.6); padding-top: 1rem;">
+            <p style="font-size: 0.78rem; color: #5a5146; margin: 4px 0;">✨ Authentic tailored Kuwaiti silhouettes & linens</p>
+            <p style="font-size: 0.78rem; color: #5a5146; margin: 4px 0;">📍 Fahaheel Bazar Atelier collection verified</p>
+            <p style="font-size: 0.78rem; color: #5a5146; margin: 4px 0;">💬 WhatsApp live dispatch updates to your phone</p>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <script src="assets/js/checkout.js"></script>
+</body>
+</html>

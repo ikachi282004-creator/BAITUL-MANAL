@@ -1,0 +1,109 @@
+/* ====================================================
+   BAITUL MANAL — WISHLIST SHOWCASE STYLES
+   ==================================================== */
+
+.wishlist-page-body {
+  background-color: #fbf9f6;
+  min-height: 100vh;
+}
+
+.wishlist-stage {
+  padding-top: 2rem;
+  padding-bottom: 5rem;
+}
+
+.wishlist-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(214, 203, 186, 0.6);
+}
+
+.wishlist-eyebrow {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--primary-gold);
+}
+
+.wishlist-title {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #181512;
+  margin: 0.25rem 0 0;
+}
+
+.btn-clear-wishlist {
+  background: none;
+  border: none;
+  color: #b33939;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Wishlist Specific Card Additions */
+.wishlist-action-bar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.btn-move-to-bag {
+  background: #181512;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-move-to-bag:hover {
+  background: var(--primary-gold);
+  color: #14110e;
+}
+
+.btn-remove-wishlist {
+  background: #ffffff;
+  border: 1px solid rgba(214, 203, 186, 0.8);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #b33939;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Empty State */
+.wishlist-empty-box {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+
+.wishlist-empty-box .empty-icon {
+  font-size: 2.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.wishlist-empty-box h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  margin: 0 0 0.5rem;
+}
+
+.wishlist-empty-box p {
+  color: #8c8173;
+  margin-bottom: 1.5rem;
+}

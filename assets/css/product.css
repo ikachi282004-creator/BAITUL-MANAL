@@ -1,0 +1,504 @@
+/* ====================================================
+   BAITUL MANAL — LUXURY PRODUCT ATELIER STYLES
+   ==================================================== */
+
+.product-page-body {
+  background-color: #fbf9f6;
+}
+
+.product-viewport {
+  padding-top: 1.5rem;
+  padding-bottom: 5rem;
+}
+
+/* Breadcrumbs */
+.pdp-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  color: #8c8173;
+  margin-bottom: 2rem;
+}
+
+.pdp-breadcrumbs a {
+  color: #181512;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pdp-breadcrumbs .crumb-current {
+  color: var(--primary-gold);
+  font-weight: 600;
+}
+
+/* 2-Column Grid Stage */
+.pdp-stage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .pdp-stage-grid {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 3.5rem;
+  }
+}
+
+/* Left Column: Gallery */
+.pdp-main-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #ffffff;
+  border: 1px solid rgba(214, 203, 186, 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  cursor: crosshair;
+}
+
+.pdp-hero-zoom-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center center;
+}
+
+.pdp-live-indicator {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 17, 14, 0.85);
+  color: #ffffff;
+  backdrop-filter: blur(6px);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pulse-beacon {
+  width: 8px;
+  height: 8px;
+  background: #27ae60;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.25);
+  animation: pulseBeacon 2s infinite ease-in-out;
+}
+
+@keyframes pulseBeacon {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* Filmstrip Thumbnails */
+.pdp-filmstrip-track {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.pdp-thumb-item {
+  width: 76px;
+  height: 96px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  background: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.pdp-thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pdp-thumb-item.active {
+  border-color: var(--primary-gold);
+  box-shadow: 0 4px 14px rgba(197, 168, 128, 0.3);
+}
+
+/* Right Column: Details & Configurator */
+.pdp-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.collection-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--primary-gold);
+  color: #14110e;
+  padding: 3px 9px;
+  border-radius: 4px;
+}
+
+.sku-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  color: #8c8173;
+  font-weight: 600;
+}
+
+.pdp-title {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #181512;
+  margin: 0 0 0.75rem;
+}
+
+.pdp-rating-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  color: #5a5146;
+  margin-bottom: 1.25rem;
+}
+
+.pdp-rating-strip .stars {
+  color: var(--primary-gold);
+  letter-spacing: 2px;
+}
+
+.pdp-pricing-deck {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.pdp-price-curr {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #181512;
+}
+
+.pdp-price-curr.discounted {
+  color: #b33939;
+}
+
+.pdp-price-strike {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  color: #8c8173;
+  text-decoration: line-through;
+}
+
+.pdp-discount-pill {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(179, 57, 57, 0.1);
+  color: #b33939;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Dispatch Card */
+.pdp-dispatch-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(214, 203, 186, 0.6);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 1.75rem;
+}
+
+.dispatch-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #27ae60;
+  flex-shrink: 0;
+}
+
+.dispatch-title {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  color: #181512;
+}
+
+.dispatch-sub {
+  margin: 2px 0 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.74rem;
+  color: #8c8173;
+}
+
+/* Configurator Shelf */
+.pdp-config-shelf {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.config-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #181512;
+}
+
+.highlight-val {
+  color: var(--primary-gold);
+}
+
+.size-modal-link {
+  background: none;
+  border: none;
+  color: var(--primary-gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pdp-sizes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pdp-size-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid rgba(214, 203, 186, 0.8);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #181512;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdp-size-btn.active {
+  background: #181512;
+  color: #ffffff;
+  border-color: #181512;
+}
+
+.pdp-colors-row {
+  display: flex;
+  gap: 10px;
+}
+
+.pdp-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  outline: 1.5px solid rgba(214, 203, 186, 0.8);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.pdp-color-swatch.active {
+  outline: 2px solid var(--primary-gold);
+  transform: scale(1.1);
+}
+
+.pdp-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid rgba(214, 203, 186, 0.8);
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.pdp-qty-stepper .stepper-btn {
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #181512;
+}
+
+.pdp-qty-stepper input {
+  width: 44px;
+  text-align: center;
+  border: none;
+  outline: none;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* Command Actions */
+.pdp-command-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.btn-pdp-cart {
+  width: 100%;
+  background: #181512;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 18px rgba(24, 21, 18, 0.15);
+}
+
+.btn-pdp-cart:hover {
+  background: var(--primary-gold);
+  color: #14110e;
+}
+
+.btn-cart-divider {
+  opacity: 0.3;
+}
+
+.pdp-secondary-actions {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 10px;
+}
+
+.btn-pdp-fav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px solid rgba(214, 203, 186, 0.8);
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #181512;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-pdp-fav.active {
+  border-color: #b33939;
+  color: #b33939;
+}
+
+.btn-pdp-fav.active svg {
+  fill: #b33939;
+  stroke: #b33939;
+}
+
+.btn-pdp-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #25d366;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.btn-pdp-whatsapp:hover {
+  transform: translateY(-2px);
+}
+
+/* Accordions */
+.pdp-accordions-deck {
+  border-top: 1px solid rgba(214, 203, 186, 0.6);
+  padding-top: 1.5rem;
+}
+
+.pdp-pane {
+  border-bottom: 1px solid rgba(214, 203, 186, 0.5);
+  padding: 12px 0;
+}
+
+.pdp-pane__summary {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #181512;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+}
+
+.pdp-pane__summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdp-pane__summary::after {
+  content: '+';
+  position: absolute;
+  right: 4px;
+  font-size: 1.1rem;
+}
+
+.pdp-pane[open] .pdp-pane__summary::after {
+  content: '−';
+}
+
+.pdp-pane__body {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  color: #6b6052;
+  line-height: 1.6;
+  padding-top: 8px;
+}
+
+/* Related Shelf */
+.pdp-related-section {
+  margin-top: 5rem;
+}

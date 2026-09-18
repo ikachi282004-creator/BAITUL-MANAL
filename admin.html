@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boutique Operations Portal | BAITUL MANAL</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <style>
+    .admin-body { background: #f5f3ef; min-height: 100vh; font-family: 'Outfit', sans-serif; color: #181512; }
+    .admin-header { background: #181512; color: #ffffff; padding: 1.25rem 0; border-bottom: 1px solid rgba(197, 168, 128, 0.4); }
+    .admin-header__inner { display: flex; justify-content: space-between; align-items: center; }
+    .admin-logo { font-family: 'Cinzel', serif; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.08em; color: var(--primary-gold); }
+    .admin-tag { font-size: 0.72rem; color: #8c8173; text-transform: uppercase; margin-left: 8px; }
+    
+    /* Gate View */
+    .gate-container { max-width: 400px; margin: 5rem auto; background: #fff; padding: 2.5rem; border-radius: 10px; border: 1px solid rgba(214,203,186,0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
+    .gate-title { font-family: 'Cinzel', serif; font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .gate-input { width: 100%; padding: 12px; margin: 1.25rem 0; border: 1.5px solid #d6cbba; border-radius: 6px; font-size: 1.1rem; text-align: center; letter-spacing: 0.3em; }
+    .btn-gate { width: 100%; background: #181512; color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .btn-gate:hover { background: var(--primary-gold); color: #181512; }
+
+    /* Dashboard View */
+    .dashboard-view { padding: 2.5rem 0 5rem; display: none; }
+    .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(214,203,186,0.6); }
+    .stat-label { font-size: 0.75rem; text-transform: uppercase; color: #8c8173; font-weight: 700; }
+    .stat-val { font-size: 1.6rem; font-weight: 800; color: #181512; margin-top: 4px; }
+    
+    /* Tab Controls */
+    .admin-tabs { display: flex; gap: 8px; border-bottom: 1.5px solid #d6cbba; margin-bottom: 1.75rem; }
+    .tab-btn { background: none; border: none; padding: 10px 18px; font-weight: 700; font-size: 0.88rem; color: #8c8173; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: #181512; border-bottom-color: var(--primary-gold); }
+
+    /* Tables */
+    .table-card { background: #fff; border-radius: 8px; border: 1px solid rgba(214,203,186,0.6); overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    .admin-table th { background: #faf8f5; padding: 12px 16px; border-bottom: 1px solid #d6cbba; font-size: 0.72rem; text-transform: uppercase; color: #8c8173; }
+    .admin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(214,203,186,0.4); }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+    .status-badge--pending { background: #fff3cd; color: #856404; }
+    .status-badge--dispatched { background: #d4edda; color: #155724; }
+    .status-badge--knet { background: #cce5ff; color: #004085; }
+    .btn-action { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #d6cbba; background: #fff; cursor: pointer; }
+    .btn-action:hover { background: #181512; color: #fff; }
+  </style>
+</head>
+<body class="admin-body">
+
+  <header class="admin-header">
+    <div class="container admin-header__inner">
+      <div>
+        <span class="admin-logo">BAITUL MANAL</span>
+        <span class="admin-tag">Operations Console</span>
+      </div>
+      <button type="button" id="logoutBtn" style="background:none; border:1px solid #8c8173; color:#fff; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:0.75rem; display:none;">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Passcode Gate -->
+    <div class="gate-container" id="gateCard">
+      <h2 class="gate-title">Atelier Access</h2>
+      <p style="font-size:0.8rem; color:#8c8173;">Enter the authorized boutique PIN code.</p>
+      <input type="password" id="pinInput" class="gate-input" maxlength="4" placeholder="••••" autocomplete="off">
+      <button type="button" class="btn-gate" id="pinSubmitBtn">Authorize Terminal</button>
+      <span id="gateError" style="display:block; color:#b33939; font-size:0.75rem; margin-top:8px;"></span>
+    </div>
+
+    <!-- Protected Dashboard -->
+    <div class="dashboard-view" id="dashboardView">
+      
+      <!-- Metrics Strip -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <span class="stat-label">Total Store Orders</span>
+          <div class="stat-val" id="metricTotalOrders">0</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Active Gross Sales</span>
+          <div class="stat-val" id="metricGrossSales">KD 0.000</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Catalog Products</span>
+          <div class="stat-val" id="metricCatalogCount">0</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="admin-tabs">
+        <button type="button" class="tab-btn active" data-tab="orders">Customer Dispatches</button>
+        <button type="button" class="tab-btn" data-tab="inventory">Live Inventory & Prices</button>
+      </div>
+
+      <!-- Tab 1: Orders Dispatch -->
+      <div class="tab-pane" id="paneOrders">
+        <div class="table-card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order Ref</th>
+                <th>Recipient</th>
+                <th>Governorate</th>
+                <th>Payment</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- Injected by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Inventory Grid -->
+      <div class="tab-pane" id="paneInventory" style="display:none;">
+        <div class="table-card">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Silhouette Name</th>
+                <th>Category</th>
+                <th>Original Price</th>
+                <th>Sale Price</th>
+                <th>Sizes Supported</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody">
+              <!-- Injected by admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>

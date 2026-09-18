@@ -1,0 +1,24 @@
+:root {
+  /* Colors */
+  --primary-gold: #c5a880;
+  --primary-gold-hover: #b09168;
+  --bg-beige: #f9f6f0;
+  --bg-white: #ffffff;
+  --text-dark: #1a1a1a;
+  --text-muted: #666666;
+  --border-color: #eae5dc;
+
+  /* Typography */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', serif;
+
+  /* Transitions & Radii */
+  --transition: 0.25s ease;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+[dir="rtl"] {
+  --font-body: 'Tajawal', system-ui, sans-serif;
+  --font-serif: 'Amiri', serif;
+}

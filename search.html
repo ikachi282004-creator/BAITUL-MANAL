@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Catalog | BAITUL MANAL Kuwait</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body class="shop-editorial-body">
+
+  <!-- Top Announcement Bar -->
+  <aside class="top-bar" aria-label="Utility">
+    <div class="container top-bar__inner">
+      <div class="top-bar__slider" id="announcementSlider">
+        <div class="top-bar__track">
+          <div class="top-bar__slide active">
+            <span class="promo-pill" data-i18n="badge_exclusive">EXCLUSIVE</span>
+            <span class="top-bar__text" data-i18n="announcement_1">Free delivery across Kuwait on orders above KD 20</span>
+          </div>
+        </div>
+      </div>
+      <div class="top-bar__actions">
+        <button class="lang-switch-btn" aria-label="Toggle language">
+          <span class="lang-text">العربية</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sticky Header -->
+  <header class="site-header" id="siteHeader">
+    <div class="container header__inner">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-logo__primary">BAITUL MANAL</span>
+        <span class="brand-logo__sub">FAHAHEEL • KUWAIT</span>
+      </a>
+
+      <nav class="desktop-nav">
+        <ul class="nav-list">
+          <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
+          <li><a href="shop.html?category=women" class="nav-link" data-i18n="nav_women">Women</a></li>
+          <li><a href="shop.html?category=girls" class="nav-link" data-i18n="nav_girls">Girls</a></li>
+          <li><a href="shop.html?category=boys" class="nav-link" data-i18n="nav_boys">Boys</a></li>
+          <li><a href="shop.html?category=baby" class="nav-link" data-i18n="nav_baby">Baby</a></li>
+          <li><a href="shop.html?category=maid" class="nav-link" data-i18n="nav_maid">Maid Uniform</a></li>
+        </ul>
+      </nav>
+
+      <div class="header__actions">
+        <a href="wishlist.html" class="action-btn" aria-label="Wishlist">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </a>
+        <a href="cart.html" class="cart-pill-btn" aria-label="Cart">
+          <div class="cart-pill-btn__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-2z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <span class="badge" id="cartCount">0</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search Hero Header -->
+  <header class="catalog-hero-banner search-hero-banner">
+    <div class="container catalog-hero-content">
+      <span class="catalog-eyebrow" data-i18n="search_eyebrow">PREDICTIVE CATALOG SEARCH</span>
+      <h1 class="catalog-headline" data-i18n="search_title">Search Our Collections</h1>
+      
+      <!-- High-Tech Search Input Box -->
+      <div class="search-command-bar">
+        <svg class="search-lens-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="mainSearchInput" placeholder="Search by name, fabric, or SKU (e.g. Darra, Uniform, Linen)..." autofocus autocomplete="off">
+        <button type="button" id="clearSearchBtn" class="clear-search-btn" aria-label="Clear">&times;</button>
+      </div>
+
+      <!-- Trending Quick Search Tags -->
+      <div class="search-trending-shelf">
+        <span class="trend-tag-label" data-i18n="search_popular">Popular Searches:</span>
+        <div class="trend-chips-wrap">
+          <button class="trend-chip" data-query="darra">✨ Kuwaiti Darra</button>
+          <button class="trend-chip" data-query="maid uniform">Maid Uniforms</button>
+          <button class="trend-chip" data-query="kaftan">Silk Kaftan</button>
+          <button class="trend-chip" data-query="baby">Baby Sets</button>
+          <button class="trend-chip" data-query="frock">Girls Frock</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Status & Typo Bar -->
+  <div class="container search-status-container">
+    <div class="search-status-bar" id="searchFeedbackBar" style="display: none;">
+      <div class="status-left">
+        <span class="status-pulse-dot"></span>
+        <span id="searchResultText"></span>
+      </div>
+      <div id="typoNotice" class="typo-pill" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- Search Results Stage -->
+  <main class="container catalog-stage">
+    <div class="arrivals-grid density-4" id="searchResultsGrid">
+      <!-- Injected dynamically via search.js -->
+    </div>
+  </main>
+
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/search.js"></script>
+</body>
+</html>

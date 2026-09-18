@@ -1,0 +1,451 @@
+[
+  {
+    "id": "BM-W-01",
+    "sku": "DR-LNN-01",
+    "category": "women",
+    "subCategory": "darra",
+    "name": {
+      "en": "Fahaheel Embroidered Linen Darra",
+      "ar": "دراعة كتان مطرزة الفحيحيل"
+    },
+    "price": 16.500,
+    "salePrice": 13.900,
+    "sizes": ["S", "M", "L", "XL", "Free Size"],
+    "colors": [
+      { "name": "Desert Sand", "hex": "#d4b996" },
+      { "name": "Pure Olive", "hex": "#556b2f" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-W-02",
+    "sku": "DR-GLD-02",
+    "category": "women",
+    "subCategory": "darra",
+    "name": {
+      "en": "Golden Thread Jacquard Darra",
+      "ar": "دراعة جاكار بخيوط ذهبية"
+    },
+    "price": 22.000,
+    "salePrice": 18.500,
+    "sizes": ["M", "L", "XL", "2XL"],
+    "colors": [
+      { "name": "Deep Royal", "hex": "#1a2a3a" },
+      { "name": "Champagne", "hex": "#e3d2ba" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&q=80",
+      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-W-03",
+    "sku": "DR-SLK-03",
+    "category": "women",
+    "subCategory": "darra",
+    "name": {
+      "en": "Raw Silk Pleated Kuwaiti Kaftan",
+      "ar": "قفطان كويتي حرير بليسيه"
+    },
+    "price": 24.500,
+    "salePrice": null,
+    "sizes": ["Free Size"],
+    "colors": [
+      { "name": "Rosewood", "hex": "#65000b" },
+      { "name": "Emerald", "hex": "#097969" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&q=80",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-W-04",
+    "sku": "DR-CHM-04",
+    "category": "women",
+    "subCategory": "darra",
+    "name": {
+      "en": "Pastel Chiffon Evening Jalabiya",
+      "ar": "جلابية شيفون باستيل مسائية"
+    },
+    "price": 19.750,
+    "salePrice": 16.500,
+    "sizes": ["S", "M", "L"],
+    "colors": [
+      { "name": "Lilac Mist", "hex": "#c8b9d2" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": false
+  },
+  {
+    "id": "BM-W-05",
+    "sku": "DR-ORG-05",
+    "category": "women",
+    "subCategory": "darra",
+    "name": {
+      "en": "Pearl-Trimmed Organza Darra",
+      "ar": "دراعة أورجانزا مرصعة باللؤلؤ"
+    },
+    "price": 28.000,
+    "salePrice": null,
+    "sizes": ["M", "L", "XL"],
+    "colors": [
+      { "name": "Alabaster", "hex": "#f2f0eb" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=900&q=80",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-MU-01",
+    "sku": "MU-CTN-01",
+    "category": "maid",
+    "subCategory": "maid-uniform",
+    "name": {
+      "en": "Classic Mandarin Collar Maid Uniform",
+      "ar": "يونيفورم خادمات ياقة ماندارين كلاسيكي"
+    },
+    "price": 6.500,
+    "salePrice": 5.250,
+    "sizes": ["S", "M", "L", "XL", "2XL"],
+    "colors": [
+      { "name": "Sky Blue", "hex": "#87ceeb" },
+      { "name": "Pearl Grey", "hex": "#d3d3d3" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=900&q=80",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-MU-02",
+    "sku": "MU-KWT-02",
+    "category": "maid",
+    "subCategory": "maid-uniform",
+    "name": {
+      "en": "Premium Heavy Cotton 2-Piece Uniform",
+      "ar": "طقم يونيفورم قطن ثقيل فاخر قطعتين"
+    },
+    "price": 8.000,
+    "salePrice": null,
+    "sizes": ["M", "L", "XL", "2XL", "3XL"],
+    "colors": [
+      { "name": "Navy Blue", "hex": "#000080" },
+      { "name": "Beige", "hex": "#f5f5dc" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80",
+      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-MU-03",
+    "sku": "MU-WHT-03",
+    "category": "maid",
+    "subCategory": "maid-uniform",
+    "name": {
+      "en": "Double-Stitched Crisp White Uniform",
+      "ar": "يونيفورم أبيض ناصع بخياطة مزدوجة"
+    },
+    "price": 7.500,
+    "salePrice": 6.250,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [
+      { "name": "Optical White", "hex": "#ffffff" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=80",
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": false
+  },
+  {
+    "id": "BM-MU-04",
+    "sku": "MU-SLV-04",
+    "category": "maid",
+    "subCategory": "maid-uniform",
+    "name": {
+      "en": "Full Sleeve Breathable Poly-Cotton Set",
+      "ar": "طقم كم طويل مريح بولي-قطن"
+    },
+    "price": 7.000,
+    "salePrice": null,
+    "sizes": ["M", "L", "XL", "2XL"],
+    "colors": [
+      { "name": "Teal", "hex": "#008080" },
+      { "name": "Dusty Pink", "hex": "#dcae96" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=900&q=80",
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-MU-05",
+    "sku": "MU-DLX-05",
+    "category": "maid",
+    "subCategory": "maid-uniform",
+    "name": {
+      "en": "Executive Hospitality Housekeeping Robe",
+      "ar": "روب تدبير منزلي وضيافة فندقية"
+    },
+    "price": 9.500,
+    "salePrice": 7.900,
+    "sizes": ["S", "M", "L", "XL", "2XL"],
+    "colors": [
+      { "name": "Charcoal Grey", "hex": "#36454f" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=900&q=80",
+      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-BB-01",
+    "sku": "BB-RMP-01",
+    "category": "baby",
+    "subCategory": "baby-essentials",
+    "name": {
+      "en": "Organic Ribbed Cotton Newborn Romper",
+      "ar": "أفرول مواليد مضلع قطن عضوي"
+    },
+    "price": 4.500,
+    "salePrice": 3.750,
+    "sizes": ["0-3M", "3-6M", "6-12M"],
+    "colors": [
+      { "name": "Oatmeal", "hex": "#e3dac9" },
+      { "name": "Sage", "hex": "#9dc183" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80",
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-BB-02",
+    "sku": "BB-KNT-02",
+    "category": "baby",
+    "subCategory": "baby-essentials",
+    "name": {
+      "en": "Chunky Knit Cardigan & Booties Set",
+      "ar": "طقم كنزة صوف محبوكة مع حذاء مواليد"
+    },
+    "price": 7.250,
+    "salePrice": null,
+    "sizes": ["0-6M", "6-12M", "12-18M"],
+    "colors": [
+      { "name": "Soft Cream", "hex": "#fffdd0" },
+      { "name": "Camel", "hex": "#c19a6b" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80",
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-BB-03",
+    "sku": "BB-SLP-03",
+    "category": "baby",
+    "subCategory": "baby-essentials",
+    "name": {
+      "en": "Zippered Footed Sleepsuit Set of 2",
+      "ar": "طقم قطعتين بيجاما أقدام بسحاب"
+    },
+    "price": 6.000,
+    "salePrice": 4.900,
+    "sizes": ["0-3M", "3-6M", "6-9M"],
+    "colors": [
+      { "name": "Cloud White", "hex": "#f8f9fa" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80",
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-BB-04",
+    "sku": "BB-SWD-04",
+    "category": "baby",
+    "subCategory": "baby-essentials",
+    "name": {
+      "en": "Muslin Bamboo Receiving Swaddle Blanket",
+      "ar": "مدس وقماط شاش خيزران فائق النعومة"
+    },
+    "price": 3.750,
+    "salePrice": null,
+    "sizes": ["One Size"],
+    "colors": [
+      { "name": "Earthy Sand", "hex": "#c2b280" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80",
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": false
+  },
+  {
+    "id": "BM-BB-05",
+    "sku": "BB-SET-05",
+    "category": "baby",
+    "subCategory": "baby-essentials",
+    "name": {
+      "en": "Hospital Coming-Home 5-Piece Welcome Pack",
+      "ar": "طقم استقبال خروج المشفى 5 قطع"
+    },
+    "price": 9.500,
+    "salePrice": 8.000,
+    "sizes": ["Newborn", "0-3M"],
+    "colors": [
+      { "name": "Pure Ivory", "hex": "#fffff0" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80",
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-IN-01",
+    "sku": "IN-BOD-01",
+    "category": "baby",
+    "subCategory": "baby-innerwear",
+    "name": {
+      "en": "100% Combed Cotton Sleeveless Bodysuit (Pack of 3)",
+      "ar": "طقم 3 سالوبيت قطن ممشط بدون أكمام"
+    },
+    "price": 4.500,
+    "salePrice": 3.500,
+    "sizes": ["0-3M", "3-6M", "6-12M", "12-18M"],
+    "colors": [
+      { "name": "White", "hex": "#ffffff" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80",
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  },
+  {
+    "id": "BM-IN-02",
+    "sku": "IN-LNG-02",
+    "category": "baby",
+    "subCategory": "baby-innerwear",
+    "name": {
+      "en": "Thermal Long-Sleeve Pure Cotton Undershirt",
+      "ar": "فانيلا قطنية داخلية كم طويل دافئة"
+    },
+    "price": 3.000,
+    "salePrice": null,
+    "sizes": ["3-6M", "6-12M", "12-24M"],
+    "colors": [
+      { "name": "Pure White", "hex": "#ffffff" },
+      { "name": "Soft Heather", "hex": "#e0e0e0" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80",
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-IN-03",
+    "sku": "IN-VNT-03",
+    "category": "baby",
+    "subCategory": "baby-innerwear",
+    "name": {
+      "en": "Breathable Pointelle Summer Singlet (Pack of 2)",
+      "ar": "طقم 2 توب داخلي صيفي مخرم قابل للتنفس"
+    },
+    "price": 3.500,
+    "salePrice": 2.900,
+    "sizes": ["0-3M", "3-6M", "6-12M"],
+    "colors": [
+      { "name": "Milk White", "hex": "#fdfbf7" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80",
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": false
+  },
+  {
+    "id": "BM-IN-04",
+    "sku": "IN-PNT-04",
+    "category": "baby",
+    "subCategory": "baby-innerwear",
+    "name": {
+      "en": "High-Waist Cotton Nappy Cover Panties (Pack of 3)",
+      "ar": "طقم 3 سراويل داخلية قطنية لحماية الحفاض"
+    },
+    "price": 3.750,
+    "salePrice": null,
+    "sizes": ["0-6M", "6-12M", "12-18M"],
+    "colors": [
+      { "name": "White & Pastels", "hex": "#faf0e6" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=900&q=80",
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80"
+    ],
+    "isNew": false,
+    "featured": true
+  },
+  {
+    "id": "BM-IN-05",
+    "sku": "IN-HYP-05",
+    "category": "baby",
+    "subCategory": "baby-innerwear",
+    "name": {
+      "en": "Hypoallergenic Tagless Envelope-Neck Vest",
+      "ar": "فانيلا قطنية بياقة مطوية بدون بطاقة حساسية"
+    },
+    "price": 2.750,
+    "salePrice": 2.250,
+    "sizes": ["0-3M", "3-6M", "6-12M"],
+    "colors": [
+      { "name": "Natural", "hex": "#ffffff" }
+    ],
+    "images": [
+      "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=900&q=80",
+      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=900&q=80"
+    ],
+    "isNew": true,
+    "featured": true
+  }
+]

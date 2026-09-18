@@ -1,0 +1,373 @@
+/* ====================================================
+   BAITUL MANAL — ORDER CONFIRMATION & RECEIPT ENGINE
+   ==================================================== */
+
+.success-page-body {
+  background-color: #f7f4ef;
+  min-height: 100vh;
+}
+
+.site-header--minimal {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(214, 203, 186, 0.5);
+  padding: 1rem 0;
+}
+
+.header-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: #27ae60;
+  border-radius: 50%;
+}
+
+.success-viewport {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 5rem;
+}
+
+/* Hero */
+.success-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.checkmark-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(39, 174, 96, 0.4);
+  box-shadow: 0 8px 24px rgba(39, 174, 96, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.success-eyebrow {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--primary-gold);
+}
+
+.success-title {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #181512;
+  margin: 0.4rem 0 0.6rem;
+}
+
+.success-subtitle {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  color: #6d6458;
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+/* Receipt Card (Voucher) */
+.receipt-card {
+  background: #ffffff;
+  border: 1px solid rgba(214, 203, 186, 0.8);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.receipt-brand {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #181512;
+}
+
+.receipt-loc {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  color: #8c8173;
+}
+
+.receipt-ref-block {
+  text-align: right;
+}
+
+.ref-label {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8c8173;
+}
+
+.ref-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary-gold);
+}
+
+.ref-date {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  color: #8c8173;
+  margin-top: 2px;
+}
+
+.receipt-divider {
+  height: 1px;
+  background: rgba(214, 203, 186, 0.5);
+  margin: 1.5rem 0;
+}
+
+/* Meta Grid */
+.receipt-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1.25rem;
+}
+
+.meta-label {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8c8173;
+  margin-bottom: 3px;
+}
+
+.meta-val {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem;
+  color: #181512;
+}
+
+.meta-sub {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  color: #6d6458;
+}
+
+.meta-badge {
+  display: inline-block;
+  margin-top: 3px;
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* Line Items Table */
+.receipt-items-table {
+  font-family: 'Outfit', sans-serif;
+}
+
+.receipt-items-table .table-head {
+  display: grid;
+  grid-template-columns: 1fr 60px 110px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8c8173;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(214, 203, 186, 0.7);
+}
+
+.receipt-item-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 110px;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(214, 203, 186, 0.3);
+}
+
+.receipt-item-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  color: #181512;
+}
+
+.receipt-item-spec {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  color: #8c8173;
+}
+
+/* Totals Ledger */
+.receipt-totals-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  margin-left: auto;
+  max-width: 320px;
+}
+
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  color: #6d6458;
+}
+
+.ledger-row--final {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1.5px solid #181512;
+  color: #181512;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+/* Stamp & Exemption */
+.receipt-stamp-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed rgba(214, 203, 186, 0.7);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stamp-box {
+  border: 1.5px solid rgba(197, 168, 128, 0.6);
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.stamp-title {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--primary-gold);
+}
+
+.stamp-sub {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.65rem;
+  color: #8c8173;
+}
+
+.tax-exemption {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  color: #8c8173;
+}
+
+/* Actions Deck */
+.success-actions-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 2rem;
+}
+
+.btn-whatsapp-dispatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #25d366;
+  color: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
+  transition: transform 0.2s;
+}
+
+.btn-whatsapp-dispatch:hover {
+  transform: translateY(-2px);
+}
+
+.actions-sub-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-secondary-receipt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(214, 203, 186, 0.8);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #181512;
+  cursor: pointer;
+}
+
+.btn-return-shop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #181512;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* Print Styles */
+@media print {
+  .no-print, .site-header, .top-bar, .success-hero {
+    display: none !important;
+  }
+  .receipt-card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+}

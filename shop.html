@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Progressive Web App Meta -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#c5a880" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Baitul Manal" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <title>The Atelier Catalog | BAITUL MANAL Kuwait</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+</head>
+<body class="shop-editorial-body">
+
+  <!-- Top Announcement Bar -->
+  <aside class="top-bar" aria-label="Utility">
+    <div class="container top-bar__inner">
+      <div class="top-bar__slider" id="announcementSlider">
+        <div class="top-bar__track">
+          <div class="top-bar__slide active">
+            <span class="promo-pill" data-i18n="badge_exclusive">EXCLUSIVE</span>
+            <span class="top-bar__text" data-i18n="announcement_1">Free delivery across Kuwait on orders above KD 20</span>
+          </div>
+        </div>
+      </div>
+      <div class="top-bar__actions">
+        <button class="lang-switch-btn" aria-label="Toggle language">
+          <span class="lang-text">العربية</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sticky Luxury Header -->
+  <header class="site-header" id="siteHeader">
+    <div class="container header__inner">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-logo__primary">BAITUL MANAL</span>
+        <span class="brand-logo__sub">FAHAHEEL • KUWAIT</span>
+      </a>
+
+      <nav class="desktop-nav">
+        <ul class="nav-list">
+          <li><a href="index.html" class="nav-link" data-i18n="nav_home">Home</a></li>
+          <li><a href="shop.html?category=women" class="nav-link" data-i18n="nav_women">Women</a></li>
+          <li><a href="shop.html?category=girls" class="nav-link" data-i18n="nav_girls">Girls</a></li>
+          <li><a href="shop.html?category=boys" class="nav-link" data-i18n="nav_boys">Boys</a></li>
+          <li><a href="shop.html?category=baby" class="nav-link" data-i18n="nav_baby">Baby</a></li>
+          <li><a href="shop.html?category=maid" class="nav-link" data-i18n="nav_maid">Maid Uniform</a></li>
+        </ul>
+      </nav>
+
+      <div class="header__actions">
+        <a href="wishlist.html" class="action-btn" aria-label="Wishlist">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </a>
+        <a href="cart.html" class="cart-pill-btn" aria-label="Cart">
+          <div class="cart-pill-btn__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-2z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <span class="badge" id="cartCount">0</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Editorial Catalog Header Banner -->
+  <header class="catalog-hero-banner">
+    <div class="container catalog-hero-content">
+      <span class="catalog-eyebrow" data-i18n="cat_curated">CURATED BOUTIQUE</span>
+      <h1 class="catalog-headline" id="shopTitle">All Collections</h1>
+      <p class="catalog-subline" id="shopSubtitle">Explore Kuwait’s signature modest couture, delicate childrenswear, and refined daily wear.</p>
+
+      <!-- Department Quick Bar Pills -->
+      <div class="catalog-pills-bar" id="deptPills">
+        <button class="cat-pill active" data-cat="all">All Items</button>
+        <button class="cat-pill" data-cat="women" data-i18n="nav_women">Women</button>
+        <button class="cat-pill" data-cat="girls" data-i18n="nav_girls">Girls</button>
+        <button class="cat-pill" data-cat="boys" data-i18n="nav_boys">Boys</button>
+        <button class="cat-pill" data-cat="baby" data-i18n="nav_baby">Baby</button>
+        <button class="cat-pill" data-cat="maid" data-i18n="nav_maid">Maid Uniforms</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Catalog Control Strip -->
+  <div class="catalog-control-strip">
+    <div class="container strip-inner">
+      <!-- Search Input Embedded in Catalog -->
+      <div class="catalog-search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="catalogSearch" placeholder="Search by name, fabric, or SKU..." aria-label="Search Catalog">
+      </div>
+
+      <div class="strip-tools">
+        <!-- Results Counter -->
+        <span class="results-badge" id="productResultsCount">8 items</span>
+
+        <!-- Viewport Density Switches (Desktop) -->
+        <div class="grid-density-toggles desktop-only">
+          <button class="density-btn" data-cols="2" aria-label="2 Columns">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg>
+          </button>
+          <button class="density-btn" data-cols="3" aria-label="3 Columns">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="3" width="5.5" height="18" rx="1"/><rect x="9.2" y="3" width="5.5" height="18" rx="1"/><rect x="16.5" y="3" width="5.5" height="18" rx="1"/></svg>
+          </button>
+          <button class="density-btn active" data-cols="4" aria-label="4 Columns">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="3" width="3.5" height="18" rx="1"/><rect x="7.5" y="3" width="3.5" height="18" rx="1"/><rect x="13" y="3" width="3.5" height="18" rx="1"/><rect x="18.5" y="3" width="3.5" height="18" rx="1"/></svg>
+          </button>
+        </div>
+
+        <!-- Filter Drawer Trigger (Mobile & Tablet) -->
+        <button class="btn-refine-trigger" id="openFiltersBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+          <span data-i18n="filter_btn_label">Filter Refine</span>
+        </button>
+
+        <!-- Sorting Dropdown -->
+        <div class="luxury-sort-box">
+          <select id="sortSelect" class="luxury-select">
+            <option value="featured">Sort: Handpicked</option>
+            <option value="newest">Sort: Newest First</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Applied Filter Bubbles Bar -->
+  <div class="active-chips-strip container" id="activeChipsStrip"></div>
+
+  <!-- Main Catalog View -->
+  <main class="container catalog-stage">
+    <div class="catalog-layout-grid">
+      
+      <!-- Left Glass Sidebar Filter (Desktop) -->
+      <aside class="catalog-sidebar-glass" id="filtersSidebar">
+        <div class="filters-top-bar">
+          <span class="filters-heading-title">Filter Selection</span>
+          <button class="drawer__close" id="closeFiltersBtn">&times;</button>
+        </div>
+
+        <!-- Department Hierarchy -->
+        <div class="filter-box">
+          <h4 class="filter-box__label">Department</h4>
+          <div class="filter-box__list" id="sidebarDeptList">
+            <button class="sidebar-dept-btn active" data-cat="all">All Collections</button>
+            <button class="sidebar-dept-btn" data-cat="women">Women's Darra & Couture</button>
+            <button class="sidebar-dept-btn" data-cat="girls">Girls Frocks & Sets</button>
+            <button class="sidebar-dept-btn" data-cat="boys">Boys Casual & Sets</button>
+            <button class="sidebar-dept-btn" data-cat="baby">Baby & Innerwear</button>
+            <button class="sidebar-dept-btn" data-cat="maid">Maid Uniforms</button>
+          </div>
+        </div>
+
+        <!-- Size Matrix -->
+        <div class="filter-box">
+          <h4 class="filter-box__label">Available Size</h4>
+          <div class="size-chip-cluster" id="sizeChipsBox">
+            <button class="chip-item" data-size="S">S</button>
+            <button class="chip-item" data-size="M">M</button>
+            <button class="chip-item" data-size="L">L</button>
+            <button class="chip-item" data-size="XL">XL</button>
+            <button class="chip-item" data-size="2XL">2XL</button>
+            <button class="chip-item" data-size="0-3M">0-3M</button>
+            <button class="chip-item" data-size="Free Size">Free Size</button>
+          </div>
+        </div>
+
+        <!-- Price Spectrum -->
+        <div class="filter-box">
+          <div class="price-header-row">
+            <h4 class="filter-box__label">Price Ceiling</h4>
+            <span class="price-bubble-val" id="priceDisplay">KD 30.000</span>
+          </div>
+          <input type="range" id="priceRange" min="2" max="30" step="0.5" value="30" class="luxury-range">
+          <div class="range-limits">
+            <span>KD 2.000</span>
+            <span>KD 30.000</span>
+          </div>
+        </div>
+
+        <!-- Clear Reset -->
+        <button type="button" class="btn-clear-all" id="resetFiltersBtn">Reset All Parameters</button>
+      </aside>
+      <div class="filter-overlay" id="filterOverlay"></div>
+
+      <!-- Main Showcase Catalog Grid -->
+      <section class="catalog-grid-shell">
+        <div class="arrivals-grid density-4" id="shopCatalogGrid">
+          <!-- Populated by shop.js -->
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <!-- Slide-Out Quick Cart / Shopping Bag Drawer -->
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+    <div class="cart-drawer__header">
+      <div class="cart-drawer__title-wrap">
+        <h3>Shopping Bag</h3>
+        <span class="cart-drawer__count" id="drawerItemCount">(0)</span>
+      </div>
+      <button class="drawer__close" id="cartDrawerClose" aria-label="Close cart">&times;</button>
+    </div>
+
+    <!-- Free Shipping Progress Indicator -->
+    <div class="cart-drawer__shipping-bar" id="drawerShippingBar">
+      <span class="shipping-msg" id="drawerShippingMsg">Add KD 20.000 more for free delivery</span>
+      <div class="shipping-progress">
+        <div class="shipping-fill" id="drawerShippingFill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Items List Container -->
+    <div class="cart-drawer__items" id="cartDrawerItems">
+      <!-- Injected via app.js -->
+    </div>
+
+    <!-- Kuwait Area Delivery Selector inside Drawer -->
+    <div class="drawer-area-selector">
+      <div class="drawer-area-head">
+        <label for="drawerKuwaitArea">Kuwait Delivery Area</label>
+        <span class="drawer-free-tag" id="drawerFreeTag">FREE ELIGIBLE</span>
+      </div>
+      <select id="drawerKuwaitArea" class="drawer-area-dropdown">
+        <option value="ahmadi">Al Ahmadi & Fahaheel (KD 1.500)</option>
+        <option value="capital">Kuwait City & Al Asimah (KD 2.000)</option>
+        <option value="hawally">Hawally & Salmiya (KD 2.000)</option>
+        <option value="farwaniya">Farwaniya & Khaitan (KD 2.000)</option>
+        <option value="mubarak">Mubarak Al-Kabeer (KD 2.000)</option>
+        <option value="jahra">Al Jahra & Suburbs (KD 2.500)</option>
+      </select>
+    </div>
+
+    <!-- Drawer Promo Coupon -->
+    <div class="drawer-promo-deck">
+      <div class="drawer-promo-input">
+        <input type="text" id="drawerCouponInput" placeholder="Voucher (EID10)" autocomplete="off">
+        <button type="button" id="drawerCouponBtn">Apply</button>
+      </div>
+      <span class="drawer-coupon-msg" id="drawerCouponMsg"></span>
+    </div>
+
+    <!-- Cart Footer & Live Calculations -->
+    <div class="cart-drawer__footer">
+      <div class="cart-drawer__row">
+        <span>Subtotal</span>
+        <span class="drawer-price-val" id="drawerSubtotal">KD 0.000</span>
+      </div>
+      <div class="cart-drawer__row">
+        <span>Delivery Fee</span>
+        <span class="drawer-price-val" id="drawerDelivery">KD 1.500</span>
+      </div>
+      <div class="cart-drawer__row" id="drawerDiscountRow" style="display: none;">
+        <span>Promo Privilege</span>
+        <span class="drawer-price-val" id="drawerDiscountVal" style="color: #27ae60;">-KD 0.000</span>
+      </div>
+      <div class="cart-drawer__row cart-drawer__row--total">
+        <span>Estimated Total</span>
+        <span class="cart-drawer__subtotal" id="drawerTotal">KD 0.000</span>
+      </div>
+      
+      <div class="cart-drawer__actions">
+        <a href="cart.html" class="btn-outline-luxury btn-block">Review Full Bag & Addresses</a>
+        <a href="#" target="_blank" class="btn-concierge-wa btn-block" id="drawerWhatsAppBtn">Order Via WhatsApp</a>
+      </div>
+    </div>
+  </aside>
+  <div class="cart-overlay" id="cartOverlay"></div>
+
+  <!-- Include App.js for Global Drawer & Cart Sync -->
+  <script src="assets/js/app.js"></script>
+
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/shop.js"></script>
+</body>
+</html>
