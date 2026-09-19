@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       // Send Order to Backend Server
-      const response = await fetch('http://localhost:3000/api/orders', {
+      const response = await fetch('https://baitul-manal-1.onrender.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload)

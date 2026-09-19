@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 2. Fetch live orders from SQLite backend
     try {
-      const ordersRes = await fetch('http://localhost:3000/api/orders');
+      const ordersRes = await fetch('https://baitul-manal-1.onrender.com');
       if (ordersRes.ok) {
         ordersList = await ordersRes.json();
       } else {
