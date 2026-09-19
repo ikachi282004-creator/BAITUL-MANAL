@@ -16,7 +16,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BaitulManal@2026';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Universal Anti-Cache Middleware
+// Universal Anti-Cache Middleware (Prevents Stale Cache on Mobile & Desktop)
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -82,7 +82,6 @@ function appendOrderToDisk(orderObj) {
       const raw = fs.readFileSync(BACKUP_FILE, 'utf8');
       list = JSON.parse(raw || '[]');
     }
-    // Update or insert
     const idx = list.findIndex(o => o.orderId === orderObj.orderId);
     if (idx >= 0) {
       list[idx] = orderObj;
@@ -152,6 +151,31 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ error: 'Unauthorized' });
 }
 
+// -------------------------------------------------------------
+// BASE & HEALTH CHECK ROUTES
+// -------------------------------------------------------------
+
+app.get('/', (req, res) => {
+  res.send(`
+    <div style="font-family: sans-serif; text-align: center; padding-top: 50px; background: #121212; color: #f5f5f5; min-height: 100vh;">
+      <h1 style="color: #c5a880;">✨ Baitul Manal API is Live</h1>
+      <p>Node.js & SQLite Backend Active</p>
+    </div>
+  `);
+});
+
+app.get('/api/health', (req, res) => {
+  const currentCatalog = getProductsData();
+  const backup = getMasterBackupList();
+  res.json({
+    status: 'Online',
+    boutique: 'Baitul Manal Fahaheel',
+    catalogItemsLoaded: currentCatalog.length,
+    ordersArchived: backup.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -161,12 +185,8 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(401).json({ success: false, message: 'Invalid Admin Password.' });
 });
 
-app.get('/', (req, res) => {
-  res.send('<h1 style="color:#c5a880;text-align:center;padding-top:40px;">Baitul Manal Secure API Live</h1>');
-});
-
 // -------------------------------------------------------------
-// CUSTOMER AUTH & ORDERS
+// CUSTOMER AUTH & MANAGEMENT
 // -------------------------------------------------------------
 
 app.post('/api/customer/register', (req, res) => {
@@ -206,7 +226,10 @@ app.post('/api/customer/reset-password', (req, res) => {
   });
 });
 
-// Place Order (With Double Backup)
+// -------------------------------------------------------------
+// ORDER PROCESSING (DUAL STORAGE)
+// -------------------------------------------------------------
+
 app.post('/api/orders', (req, res) => {
   const { recipient, items, paymentMethod, deliveryArea } = req.body;
   if (!recipient || !items || !Array.isArray(items) || items.length === 0) {
@@ -250,7 +273,6 @@ app.post('/api/orders', (req, res) => {
     status: 'PENDING_DISPATCH'
   };
 
-  // 1. Save to SQLite
   const sql = `
     INSERT INTO orders (
       order_id, customer_name, customer_phone, governorate, 
@@ -277,14 +299,11 @@ app.post('/api/orders', (req, res) => {
   db.run(sql, params, function (err) {
     if (err) {
       console.error('DB Insert failed:', err.message);
-      // Fallback: save to JSON anyway
       appendOrderToDisk(formattedOrder);
       return res.status(201).json({ success: true, order: formattedOrder });
     }
 
-    // 2. Save directly to Permanent Disk Archive
     appendOrderToDisk(formattedOrder);
-
     res.status(201).json({
       success: true,
       order: formattedOrder
@@ -296,7 +315,6 @@ app.post('/api/orders', (req, res) => {
 app.get('/api/orders', (req, res) => {
   db.all('SELECT * FROM orders ORDER BY id DESC', [], (err, rows) => {
     if (err || !rows || rows.length === 0) {
-      // Fallback to disk archive if SQLite was cleared by Render restart
       const backup = getMasterBackupList();
       return res.json(backup);
     }
@@ -318,7 +336,6 @@ app.get('/api/orders', (req, res) => {
       date: r.created_at
     }));
 
-    // Merge any missing backup records into response
     const backup = getMasterBackupList();
     backup.forEach(b => {
       if (!formatted.some(f => f.orderId === b.orderId)) {
@@ -341,7 +358,6 @@ app.patch('/api/orders/:id/status', (req, res) => {
     }
 
     db.run(`UPDATE orders SET fulfillment_status = ? WHERE order_id = ? OR id = ?`, [status, id, id], function () {
-      // Update disk backup copy as well
       const backupList = getMasterBackupList();
       const matched = backupList.find(o => o.orderId === id);
       if (matched) {
@@ -353,14 +369,13 @@ app.patch('/api/orders/:id/status', (req, res) => {
   });
 });
 
-// Customer Self-Cancel Order
+// Customer Self-Cancel Order (Strictly PENDING_DISPATCH)
 app.post('/api/customer/cancel-order', (req, res) => {
   const { orderId, phone } = req.body;
   const cleanPhone = (phone || '').replace(/\D/g, '');
 
   db.get(`SELECT * FROM orders WHERE (order_id = ? OR id = ?)`, [orderId, orderId], (err, row) => {
     if (!row) {
-      // Check backup
       const backup = getMasterBackupList();
       const bOrder = backup.find(o => o.orderId === orderId);
       if (!bOrder) return res.status(404).json({ error: 'Order not found.' });
@@ -422,7 +437,6 @@ app.get('/api/orders/:orderId', (req, res) => {
       });
     }
 
-    // Fallback: check backup archive
     const backup = getMasterBackupList();
     const matched = backup.find(o => 
       o.orderId.toLowerCase() === rawQuery.toLowerCase() || 
@@ -452,7 +466,6 @@ app.get('/api/customer/orders', (req, res) => {
       }));
     }
 
-    // Merge backup list
     const backup = getMasterBackupList();
     backup.forEach(b => {
       const bPhone = (b.recipient?.phone || '').replace(/\D/g, '');
@@ -475,8 +488,30 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
   res.json({ success: true, count: req.body.length });
 });
 
-// Start Server & Auto-Restore
-app.listen(PORT, () => {
-  console.log(`🚀 Server online at http://localhost:${PORT}`);
-  autoRestoreVault();
-});
+// Ensure DB schema and start server
+const startServer = () => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT UNIQUE NOT NULL,
+      full_name TEXT NOT NULL,
+      email TEXT,
+      password_hash TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server online at http://localhost:${PORT}`);
+    autoRestoreVault();
+  });
+};
+
+if (typeof db.init === 'function') {
+  db.init().then(startServer).catch((err) => {
+    console.error('Failed to init DB:', err);
+    process.exit(1);
+  });
+} else {
+  startServer();
+}
