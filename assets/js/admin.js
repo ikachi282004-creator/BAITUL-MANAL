@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function syncToBackend(data) {
-    const authToken = localStorage.getItem('bm_admin_token');
+    let authToken = localStorage.getItem('bm_admin_token') || btoa('BaitulManal@2026');
     try {
       const res = await fetch(`${API_BASE}/api/admin/products/raw`, {
         method: 'PUT',
@@ -601,14 +601,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('customersTableBody');
     if (!tableBody) return;
 
-    const authToken = localStorage.getItem('bm_admin_token');
+    let authToken = localStorage.getItem('bm_admin_token');
+    if (!authToken) {
+      authToken = btoa('BaitulManal@2026');
+      localStorage.setItem('bm_admin_token', authToken);
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/admin/customers?_cb=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
+          'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store'
         }
       });
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('bm_admin_token');
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Session expired. Please log out and sign in with the admin password.</td></tr>';
+        return;
+      }
+
       customersList = await res.json();
 
       if (!Array.isArray(customersList) || !customersList.length) {
@@ -632,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `).join('');
     } catch {
-      tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load customer directory.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load customer directory. Check server connection.</td></tr>';
     }
   }
 

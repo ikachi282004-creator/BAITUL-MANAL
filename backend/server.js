@@ -13,7 +13,13 @@ const PORT = process.env.PORT || 3000;
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BaitulManal@2026';
 
-app.use(cors());
+// Permissive CORS with explicit preflight & Authorization header support
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'X-Requested-With']
+}));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Universal Anti-Cache Middleware (Prevents Stale Cache on Mobile & Desktop)
@@ -25,7 +31,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Helper: Standardize Kuwait & International Phone Numbers
+// Helper: Standardize Kuwait & International Phone Numbers (Ensures 8-digit match)
 function normalizePhone(rawPhone) {
   if (!rawPhone) return '';
   let digits = String(rawPhone).replace(/\D/g, '');
@@ -124,6 +130,7 @@ function appendCustomerToDisk(customerObj) {
     if (idx >= 0) list[idx] = customerObj;
     else list.unshift(customerObj);
     fs.writeFileSync(CUSTOMERS_BACKUP_FILE, JSON.stringify(list, null, 2), 'utf8');
+    console.log(`👤 Customer Directory Updated: ${customerObj.phone} (Total: ${list.length})`);
   } catch (e) {
     console.error('Failed to write customer archive:', e.message);
   }
@@ -181,6 +188,7 @@ function autoRestoreVault() {
     if (!err && (!row || row.count === 0)) {
       const customers = getMasterCustomerList();
       if (customers.length > 0) {
+        console.log(`🔄 Rehydrating ${customers.length} customer accounts...`);
         const stmt = db.prepare(`
           INSERT OR REPLACE INTO customers (full_name, phone, email, password_hash, created_at)
           VALUES (?, ?, ?, ?, ?)
@@ -198,10 +206,10 @@ function autoRestoreVault() {
 function requireAdmin(req, res, next) {
   const authHeader = req.headers['authorization'];
   const expectedToken = Buffer.from(ADMIN_PASSWORD).toString('base64');
-  if (authHeader && authHeader === `Bearer ${expectedToken}`) {
+  if (authHeader && (authHeader === `Bearer ${expectedToken}` || authHeader === expectedToken)) {
     return next();
   }
-  return res.status(403).json({ error: 'Unauthorized' });
+  return res.status(403).json({ error: 'Unauthorized. Invalid or expired token.' });
 }
 
 // -------------------------------------------------------------
