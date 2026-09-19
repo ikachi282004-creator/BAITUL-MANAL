@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   async function loadCatalog() {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products?t=${new Date().getTime()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+      const res = await fetch(`${API_BASE}/api/admin/products?_cb=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache, no-store' }
       });
       catalog = await res.json();
       renderInventoryGrid();
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const parsed = JSON.parse(rawVal);
       await syncToBackend(parsed);
     } catch (e) {
-      alert('Invalid JSON syntax: Please check quotes and commas.');
+      alert('Invalid JSON syntax.');
     }
   });
 
@@ -317,9 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
         catalog = data;
         renderInventoryGrid();
         renderRawJson();
-        alert('Catalog saved live successfully! Changes are immediately active on the shop.');
+        alert('Catalog saved live!');
       } else {
-        alert('Failed to save to server. Check admin authorization.');
+        alert('Check admin authorization.');
       }
     } catch (e) {
       alert('Network error connecting to backend.');
@@ -331,15 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   async function loadOrders() {
     const tbody = document.getElementById('ordersTableBody');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c5a880; padding:20px;">Fetching dispatches...</td></tr>';
-    }
 
     try {
-      const res = await fetch(`${API_BASE}/api/orders?t=${new Date().getTime()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+      const res = await fetch(`${API_BASE}/api/orders?_cb=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache, no-store' }
       });
       ordersList = await res.json();
+
+      if (!tbody) return;
 
       if (!Array.isArray(ordersList) || !ordersList.length) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">No dispatches registered yet.</td></tr>';
@@ -374,7 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `).join('');
 
-      // Attach Live Change Listeners
       tbody.querySelectorAll('.admin-status-dropdown').forEach(select => {
         select.onchange = async (e) => {
           const orderId = e.target.dataset.orderId;
@@ -394,15 +392,15 @@ document.addEventListener('DOMContentLoaded', () => {
               setTimeout(() => {
                 e.target.style.border = '1px solid rgba(197, 168, 128, 0.4)';
                 e.target.style.opacity = '1';
-                loadOrders(); // Refresh table state
+                loadOrders();
               }, 600);
             } else {
-              alert(patchData.error || 'Failed to update order status.');
+              alert(patchData.error || 'Failed to update status.');
               e.target.style.border = '1px solid #b33939';
               e.target.style.opacity = '1';
             }
           } catch {
-            alert('Network error connecting to backend service.');
+            alert('Network error connecting to server.');
             e.target.style.border = '1px solid #b33939';
             e.target.style.opacity = '1';
           }
@@ -410,13 +408,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      console.error('Orders fetch error:', e);
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches from server.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches.</td></tr>';
     }
   }
 
   // =========================================================================
-  // 3. PERMANENT MASTER VAULT & CUSTOMER DIRECTORY ENGINE
+  // 3. MASTER VAULT & DIRECTORY
   // =========================================================================
   const vaultTableBody = document.getElementById('vaultTableBody');
   const vaultSearchInput = document.getElementById('vaultSearchInput');
@@ -425,17 +422,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportVaultCsvBtn = document.getElementById('exportVaultCsvBtn');
 
   async function loadVaultData() {
-    if (!vaultTableBody) return;
-    vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#c5a880; padding:24px;">Synchronizing permanent ledger...</td></tr>';
-
     try {
-      const res = await fetch(`${API_BASE}/api/orders?t=${Date.now()}`, {
-        headers: { 'Cache-Control': 'no-cache' }
+      const res = await fetch(`${API_BASE}/api/orders?_cb=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache, no-store' }
       });
       vaultOrders = await res.json();
       renderVaultTable();
     } catch (e) {
-      vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c; padding:24px;">Failed to load master ledger records.</td></tr>';
+      if (vaultTableBody) vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c; padding:24px;">Failed to load ledger.</td></tr>';
     }
   }
 
@@ -447,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusVal = vaultStatusFilter?.value || 'ALL';
     const sortVal = vaultSortSelect?.value || 'newest';
 
-    // 1. Filter by text (Order ID, Name, Phone, Address)
     if (query) {
       filtered = filtered.filter(o => {
         const idMatch = (o.orderId || '').toLowerCase().includes(query);
@@ -458,12 +451,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 2. Filter by status
     if (statusVal !== 'ALL') {
       filtered = filtered.filter(o => (o.status || 'PENDING_DISPATCH') === statusVal);
     }
 
-    // 3. Sort orders
     if (sortVal === 'newest') {
       filtered.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     } else if (sortVal === 'oldest') {
@@ -473,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!filtered.length) {
-      vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8c8173; padding:30px;">No matching records found in master vault.</td></tr>';
+      vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8c8173; padding:30px;">No matching records.</td></tr>';
       return;
     }
 
@@ -498,30 +489,23 @@ document.addEventListener('DOMContentLoaded', () => {
             <strong style="color: #c5a880; font-family: monospace;">${o.orderId}</strong><br>
             <small style="color: #8c8173;">${orderDate}</small>
           </td>
-
           <td style="padding: 12px 16px;">
             <strong style="color: #fff;">${o.recipient?.name || 'Customer'}</strong><br>
             <span style="color: #c5a880; font-size: 0.8rem;">🇰🇼 ${o.recipient?.phone || ''}</span>
-            ${o.recipient?.email ? `<br><small style="color: #8c8173;">${o.recipient.email}</small>` : ''}
           </td>
-
           <td style="padding: 12px 16px; color: #d6cbba; max-width: 220px; word-break: break-word;">
             <strong style="color: #fff; font-size: 0.8rem;">${o.recipient?.governorate || ''}</strong><br>
             <span style="font-size: 0.78rem; color: #a0978b;">${o.recipient?.address || ''}</span>
           </td>
-
           <td style="padding: 12px 16px; color: #d6cbba; font-size: 0.8rem; line-height: 1.4;">
             ${garmentsList || 'Standard Order'}
           </td>
-
           <td style="padding: 12px 16px; color: #fff; font-weight: 600;">
             ${o.paymentMethod || 'COD'}
           </td>
-
           <td style="padding: 12px 16px; color: #c5a880; font-weight: 800; font-size: 0.95rem;">
             KD ${Number(o.total || 0).toFixed(3)}
           </td>
-
           <td style="padding: 12px 16px;">
             <span style="display: inline-block; background: ${badge.bg}; color: ${badge.color}; border: 1px solid ${badge.color}; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
               ${badge.label}
@@ -542,36 +526,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Governorate', 'Full Address', 'Payment', 'Total (KD)', 'Status', 'Items'];
-    const rows = vaultOrders.map(o => {
-      const itemsStr = (o.items || []).map(i => `${i.name || i.id} (${i.size || 'M'} x${i.qty || 1})`).join(' | ');
-      return [
-        `"${o.orderId}"`,
-        `"${o.date || ''}"`,
-        `"${(o.recipient?.name || '').replace(/"/g, '""')}"`,
-        `"${o.recipient?.phone || ''}"`,
-        `"${o.recipient?.email || ''}"`,
-        `"${o.recipient?.governorate || ''}"`,
-        `"${(o.recipient?.address || '').replace(/"/g, '""')}"`,
-        `"${o.paymentMethod || 'COD'}"`,
-        `"${Number(o.total || 0).toFixed(3)}"`,
-        `"${o.status || 'PENDING_DISPATCH'}"`,
-        `"${itemsStr.replace(/"/g, '""')}"`
-      ];
-    });
+    const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Governorate', 'Address', 'Payment', 'Total (KD)', 'Status'];
+    const rows = vaultOrders.map(o => [
+      `"${o.orderId}"`,
+      `"${o.date || ''}"`,
+      `"${(o.recipient?.name || '').replace(/"/g, '""')}"`,
+      `"${o.recipient?.phone || ''}"`,
+      `"${o.recipient?.governorate || ''}"`,
+      `"${(o.recipient?.address || '').replace(/"/g, '""')}"`,
+      `"${o.paymentMethod || 'COD'}"`,
+      `"${Number(o.total || 0).toFixed(3)}"`,
+      `"${o.status || 'PENDING_DISPATCH'}"`
+    ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Baitul_Manal_Master_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `Baitul_Manal_Vault_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   });
 
   // =========================================================================
-  // 4. TAB NAVIGATION ROUTER
+  // 4. TAB NAVIGATION & AUTO-SYNC ENGINE
   // =========================================================================
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -601,4 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
       loadOrders();
     };
   }
+
+  // Silent background updater for admin dashboard every 10 seconds
+  setInterval(function () {
+    const paneOrders = document.getElementById('paneOrders');
+    const paneVault = document.getElementById('paneVault');
+
+    if (paneOrders && paneOrders.style.display !== 'none') {
+      loadOrders();
+    } else if (paneVault && paneVault.style.display !== 'none') {
+      loadVaultData();
+    }
+  }, 10000);
 });

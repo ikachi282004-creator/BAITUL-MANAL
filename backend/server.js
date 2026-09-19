@@ -16,10 +16,18 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BaitulManal@2026';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Universal Anti-Cache Middleware (Prevents Stale Cache on Mobile & Desktop)
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // In-Memory Hot Cache
 let memoryCatalog = null;
 
-// Locate products.json across project variations
 function resolveCatalogPath() {
   const potentialPaths = [
     path.join(__dirname, '../assets/data/products.json'),
@@ -65,13 +73,10 @@ function saveProductsData(data) {
     fs.writeFileSync(catalogPath, JSON.stringify(data, null, 2), 'utf8');
     console.log(`✅ Saved ${data.length} items to ${catalogPath}`);
   } catch (err) {
-    console.error('Disk write error (retaining in-memory catalog):', err.message);
+    console.error('Disk write error:', err.message);
   }
 }
 
-// -------------------------------------------------------------
-// Authentication & Security Middleware
-// -------------------------------------------------------------
 function requireAdmin(req, res, next) {
   const authHeader = req.headers['authorization'];
   const expectedToken = Buffer.from(ADMIN_PASSWORD).toString('base64');
@@ -79,10 +84,9 @@ function requireAdmin(req, res, next) {
   if (authHeader && authHeader === `Bearer ${expectedToken}`) {
     return next();
   }
-  return res.status(403).json({ error: 'Unauthorized: Invalid or missing administrator credentials.' });
+  return res.status(403).json({ error: 'Unauthorized: Invalid credentials.' });
 }
 
-// Admin Login Endpoint
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) {
@@ -92,19 +96,11 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(401).json({ success: false, message: 'Invalid Admin Password.' });
 });
 
-// -------------------------------------------------------------
-// Public Store & Health Endpoints
-// -------------------------------------------------------------
-
 app.get('/', (req, res) => {
   res.send(`
-    <div style="font-family: -apple-system, sans-serif; text-align: center; padding-top: 50px; background: #121212; color: #f5f5f5; min-height: 100vh;">
+    <div style="font-family: sans-serif; text-align: center; padding-top: 50px; background: #121212; color: #f5f5f5; min-height: 100vh;">
       <h1 style="color: #c5a880;">✨ Baitul Manal API is Live</h1>
       <p>Node.js & SQLite Backend Active</p>
-      <p>
-        <a href="/api/health" style="color: #c5a880; margin-right: 15px;">Check Health</a>
-        <a href="/api/orders" style="color: #c5a880;">View Orders</a>
-      </p>
     </div>
   `);
 });
@@ -119,15 +115,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// -------------------------------------------------------------
-// Customer Authentication & Profile Management Endpoints
-// -------------------------------------------------------------
-
 // Customer Registration
 app.post('/api/customer/register', (req, res) => {
   const { fullName, phone, email, password } = req.body;
   if (!fullName || !phone || !password) {
-    return res.status(400).json({ error: 'Name, Kuwait Phone, and Password are required.' });
+    return res.status(400).json({ error: 'Name, Phone and Password are required.' });
   }
 
   const cleanPhone = phone.replace(/\D/g, '');
@@ -179,42 +171,13 @@ app.post('/api/customer/reset-password', (req, res) => {
   const cleanPhone = phone.replace(/\D/g, '');
   db.run(`UPDATE customers SET password_hash = ? WHERE phone = ?`, [newPassword, cleanPhone], function (err) {
     if (err || this.changes === 0) {
-      return res.status(404).json({ error: 'Phone number not found in our customer records.' });
+      return res.status(404).json({ error: 'Phone number not found in customer records.' });
     }
     res.json({ success: true, message: 'Password updated successfully. Please log in.' });
   });
 });
 
-// Customer Self-Service Order Cancellation
-app.post('/api/customer/cancel-order', (req, res) => {
-  const { orderId, phone } = req.body;
-  if (!orderId || !phone) {
-    return res.status(400).json({ error: 'Order reference and phone number required.' });
-  }
-
-  const cleanPhone = phone.replace(/\D/g, '');
-  db.get(`SELECT * FROM orders WHERE order_id = ? AND customer_phone = ?`, [orderId, cleanPhone], (err, row) => {
-    if (err || !row) {
-      return res.status(404).json({ error: 'Order not found.' });
-    }
-    if (row.fulfillment_status !== 'PENDING_DISPATCH') {
-      return res.status(400).json({
-        error: 'Order has already entered tailoring or courier delivery and cannot be self-cancelled. Please contact our WhatsApp concierge.'
-      });
-    }
-
-    db.run(`UPDATE orders SET fulfillment_status = 'CANCELLED' WHERE order_id = ?`, [orderId], (err2) => {
-      if (err2) return res.status(500).json({ error: 'Failed to cancel order.' });
-      res.json({ success: true, message: `Order #${orderId} has been successfully cancelled.` });
-    });
-  });
-});
-
-// -------------------------------------------------------------
-// Order Management, Dispatch, Tracking & Profile Endpoints
-// -------------------------------------------------------------
-
-// Place Order
+// Order Placement
 app.post('/api/orders', (req, res) => {
   const { recipient, items, paymentMethod, deliveryArea } = req.body;
 
@@ -223,7 +186,6 @@ app.post('/api/orders', (req, res) => {
   }
 
   const products = getProductsData();
-
   let verifiedSubtotal = 0;
   const verifiedItems = items.map((cartItem) => {
     const matched = products.find((p) => String(p.id) === String(cartItem.id) || String(p.sku) === String(cartItem.id));
@@ -272,11 +234,9 @@ app.post('/api/orders', (req, res) => {
 
   db.run(sql, params, function (err) {
     if (err) {
-      console.error('❌ Database insert error:', err.message);
+      console.error('Database insert error:', err.message);
       return res.status(500).json({ error: 'Failed to record order.' });
     }
-
-    console.log(`📦 Order Saved: ${orderId} | Customer: ${recipient.name} | Total: KD ${grandTotal.toFixed(3)}`);
 
     res.status(201).json({
       success: true,
@@ -296,56 +256,60 @@ app.post('/api/orders', (req, res) => {
   });
 });
 
-// Update Order Dispatch Status (Stage Confirmation Engine)
-// Update Order Dispatch Status (Locked once CANCELLED)
+// Update Order Status (Status-locked if CANCELLED)
 app.patch('/api/orders/:id/status', (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
   const validStatuses = ['PENDING_DISPATCH', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: 'Invalid order status stage.' });
+    return res.status(400).json({ error: 'Invalid status stage.' });
   }
 
-  // Check current order status in SQLite first
   db.get('SELECT fulfillment_status FROM orders WHERE order_id = ? OR id = ?', [id, id], (checkErr, currentOrder) => {
-    if (checkErr) {
-      return res.status(500).json({ error: 'Database verification failed.' });
-    }
-    if (!currentOrder) {
-      return res.status(404).json({ error: 'Order reference not found.' });
-    }
+    if (checkErr) return res.status(500).json({ error: 'Database verification failed.' });
+    if (!currentOrder) return res.status(404).json({ error: 'Order not found.' });
 
-    // STRICT LOCK: Once an order is CANCELLED, it can NEVER be modified
     if (currentOrder.fulfillment_status === 'CANCELLED') {
-      return res.status(403).json({ 
-        error: 'Forbidden: This order was cancelled by the customer/system and is permanently locked.' 
-      });
+      return res.status(403).json({ error: 'Order is permanently locked as CANCELLED.' });
     }
 
     const sql = `UPDATE orders SET fulfillment_status = ? WHERE order_id = ? OR id = ?`;
     db.run(sql, [status, id, id], function (updateErr) {
-      if (updateErr) {
-        console.error('Failed to update order status:', updateErr.message);
-        return res.status(500).json({ error: 'Database update failed.' });
-      }
-
-      console.log(`🚚 Status Updated: Order ${id} -> ${status}`);
+      if (updateErr) return res.status(500).json({ error: 'Update failed.' });
       res.json({ success: true, orderId: id, status });
     });
   });
 });
 
-// Retrieve All Orders (Admin Dispatches View - Live No-Cache)
-app.get('/api/orders', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+// Customer Self-Service Cancellation (Strictly PENDING_DISPATCH)
+app.post('/api/customer/cancel-order', (req, res) => {
+  const { orderId, phone } = req.body;
+  if (!orderId || !phone) return res.status(400).json({ error: 'Order ID and phone required.' });
 
-  db.all('SELECT * FROM orders ORDER BY id DESC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+  const cleanPhone = phone.replace(/\D/g, '');
+  db.get(
+    `SELECT * FROM orders WHERE (order_id = ? OR id = ?) AND (customer_phone LIKE ? OR customer_phone LIKE ?)`,
+    [orderId, orderId, `%${cleanPhone}%`, `%${cleanPhone.slice(-8)}%`],
+    (err, row) => {
+      if (err || !row) return res.status(404).json({ error: 'Order not found.' });
+
+      if (row.fulfillment_status !== 'PENDING_DISPATCH') {
+        return res.status(400).json({ error: 'Orders in tailoring or dispatch cannot be self-cancelled.' });
+      }
+
+      db.run(`UPDATE orders SET fulfillment_status = 'CANCELLED' WHERE order_id = ?`, [orderId], (err2) => {
+        if (err2) return res.status(500).json({ error: 'Database update failed.' });
+        res.json({ success: true, message: `Order #${orderId} has been successfully cancelled.` });
+      });
     }
+  );
+});
+
+// Admin Dispatches View
+app.get('/api/orders', (req, res) => {
+  db.all('SELECT * FROM orders ORDER BY id DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
     const formatted = rows.map((r) => ({
       orderId: r.order_id,
       recipient: {
@@ -366,11 +330,9 @@ app.get('/api/orders', (req, res) => {
   });
 });
 
-// Order Lookup for Track Order Page
+// Order Lookup for Track Order
 app.get('/api/orders/:orderId', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache');
   const orderId = req.params.orderId.trim();
-
   db.get('SELECT * FROM orders WHERE order_id = ? OR customer_phone = ? ORDER BY id DESC LIMIT 1', [orderId, orderId], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Order not found' });
@@ -394,13 +356,12 @@ app.get('/api/orders/:orderId', (req, res) => {
   });
 });
 
-// Customer Past Orders Lookup for My Profile
+// Customer Past Orders Lookup
 app.get('/api/customer/orders', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache');
   const phone = (req.query.phone || '').trim();
   if (!phone) return res.json([]);
 
-  db.all('SELECT * FROM orders WHERE customer_phone = ? ORDER BY id DESC', [phone], (err, rows) => {
+  db.all('SELECT * FROM orders WHERE customer_phone LIKE ? OR customer_phone LIKE ? ORDER BY id DESC', [`%${phone}%`, `%${phone.slice(-8)}%`], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     const list = rows.map(r => ({
       orderId: r.order_id,
@@ -413,19 +374,13 @@ app.get('/api/customer/orders', (req, res) => {
   });
 });
 
-// -------------------------------------------------------------
-// Admin Inventory & Catalog Control Endpoints
-// -------------------------------------------------------------
-
+// Admin Catalog Control
 app.get('/api/admin/products', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
   try {
     const products = getProductsData();
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to read catalog data.' });
+    res.status(500).json({ error: 'Failed to read catalog.' });
   }
 });
 
@@ -433,7 +388,7 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
   try {
     const updatedData = req.body;
     if (!Array.isArray(updatedData)) {
-      return res.status(400).json({ error: 'Payload must be a JSON array of products.' });
+      return res.status(400).json({ error: 'Payload must be a JSON array.' });
     }
     saveProductsData(updatedData);
     res.json({ success: true, message: 'Inventory synced live!', count: updatedData.length });
@@ -442,11 +397,7 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
   }
 });
 
-// -------------------------------------------------------------
-// Initialize Database and Start Server
-// -------------------------------------------------------------
 const startServer = () => {
-  // Ensure customers table exists
   db.run(`
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -456,24 +407,18 @@ const startServer = () => {
       password_hash TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `, (err) => {
-    if (err) console.error('Error creating customers table:', err.message);
-    else console.log('🛡️ Customers authentication table verified.');
-  });
+  `);
 
   app.listen(PORT, () => {
     console.log(`🚀 Server listening at http://localhost:${PORT}`);
-    console.log(`📁 Resolved catalog path: ${catalogPath}`);
   });
 };
 
 if (typeof db.init === 'function') {
-  db.init()
-    .then(startServer)
-    .catch((err) => {
-      console.error('❌ Failed to initialize database:', err);
-      process.exit(1);
-    });
+  db.init().then(startServer).catch((err) => {
+    console.error('Failed to init DB:', err);
+    process.exit(1);
+  });
 } else {
   startServer();
 }

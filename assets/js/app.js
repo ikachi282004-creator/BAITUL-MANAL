@@ -1,7 +1,14 @@
 /**
  * BAITUL MANAL — Master Application Controller (app.js)
- * Fully Unified & Complete Drop-in Script with Live Backend Sync & Cache-Busting
+ * Live Backend Sync, Multi-Device Cache-Busting & Reactive Navigation
  */
+
+// Instant State Refresh on Browser Back/Forward Navigation (bfcache bypass)
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const FREE_DELIVERY_THRESHOLD = 20.000;
@@ -17,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const STATIC_FALLBACK = 'assets/data/products.json';
 
-  // Kuwait Governorates & Base Shipping Rates Matrix
   const KUWAIT_AREAS = [
     { id: 'ahmadi', nameEn: 'Al Ahmadi & Fahaheel (Fast Hub)', fee: 1.500 },
     { id: 'capital', nameEn: 'Kuwait City & Al Asimah', fee: 2.000 },
@@ -43,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return total + (isNaN(qty) || qty <= 0 ? 1 : qty);
       }, 0);
     } catch (e) {
-      console.warn('Error reading bm_cart:', e);
       return 0;
     }
   }
@@ -56,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Array.isArray(wishlist)) return 0;
       return wishlist.length;
     } catch (e) {
-      console.warn('Error reading bm_wishlist:', e);
       return 0;
     }
   }
@@ -202,12 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 7. SCROLL-DRIVEN REVEAL ENGINE
+  // 7. SCROLL REVEAL & 3D TILT
   // =========================================================================
   function initScrollReveal() {
-    const targets = document.querySelectorAll(
-      'section, .section-title-wrap, .arch-card, .arrival-card, .promo-hero-banner, .benefit-item, .insta-card'
-    );
+    const targets = document.querySelectorAll('section, .section-title-wrap, .arch-card, .arrival-card, .promo-hero-banner, .benefit-item');
     targets.forEach(el => el.classList.add('reveal-on-scroll'));
 
     const observer = new IntersectionObserver((entries, obs) => {
@@ -222,9 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     targets.forEach(el => observer.observe(el));
   }
 
-  // =========================================================================
-  // 8. 3D CARD PERSPECTIVE TILT
-  // =========================================================================
   function init3DCardTilt() {
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
       document.querySelectorAll('.arrival-card, .arch-card').forEach(card => {
@@ -247,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 9. HOMEPAGE CATALOG & MULTI-SLIDERS (LIVE BACKEND FETCH + FALLBACK)
+  // 8. HOMEPAGE CATALOG WITH LIVE ANTI-CACHE FETCH
   // =========================================================================
   const featuredGrid = document.getElementById('featuredGrid');
   const arrivalTabs = document.querySelectorAll('#arrivalsTabs .tab-pill');
@@ -257,26 +256,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     try {
-      const cacheBuster = `?t=${new Date().getTime()}`;
-      const res = await fetch(`${API_BASE}/api/admin/products${cacheBuster}`, {
+      const res = await fetch(`${API_BASE}/api/admin/products?_cb=${Date.now()}`, {
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache, no-store'
         }
       });
       clearTimeout(timeoutId);
 
       if (!res.ok) throw new Error(`API status ${res.status}`);
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
-      }
-      throw new Error('API returned empty catalog payload');
+      if (Array.isArray(data) && data.length > 0) return data;
+      throw new Error('Empty payload');
     } catch (apiErr) {
-      console.warn('[App] Backend unreachable, loading static fallback...', apiErr.message);
-      const localRes = await fetch(STATIC_FALLBACK);
-      if (!localRes.ok) throw new Error('Local fallback products.json missing');
+      const localRes = await fetch(`${STATIC_FALLBACK}?_cb=${Date.now()}`);
       return await localRes.json();
     }
   }
@@ -307,9 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // =========================================================================
-  // 10. 1-ROW (4 ITEMS) STEPPER
-  // =========================================================================
   function renderArrivals(products, animateNewRow = false) {
     if (!featuredGrid) return;
     const lang = document.documentElement.getAttribute('lang') || 'en';
@@ -350,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <!-- Quick Add Action Bar -->
             <div class="arrival-card__quick-bar">
               <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -394,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
     init3DCardTilt();
   }
 
-  // Stepper Handlers
   document.getElementById('moreArrivalsBtn')?.addEventListener('click', () => {
     const filtered = currentArrivalFilter === 'all'
       ? productCache
@@ -412,9 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentVisibleCount = Math.max(ITEMS_PER_ROW, currentVisibleCount - ITEMS_PER_ROW);
       renderArrivals(productCache, false);
       bindInteractionEvents();
-
-      const arrivalsSec = document.getElementById('arrivalsSection');
-      arrivalsSec?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('arrivalsSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   });
 
@@ -429,7 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Horizontal Rails Builder
   function renderSlider(containerId, filterFn) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -463,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <!-- Quick Add Action Bar -->
             <div class="arrival-card__quick-bar">
               <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -494,11 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById(nextId)?.addEventListener('click', () => slider?.scrollBy({ left: 300, behavior: 'smooth' }));
   }
 
-  // =========================================================================
-  // 11. USER INTERACTIONS & CARD BINDINGS
-  // =========================================================================
   function bindInteractionEvents() {
-    // Wishlist Toggle
     document.querySelectorAll('.arrival-card__fav').forEach(btn => {
       btn.onclick = (e) => {
         const id = e.currentTarget.dataset.id;
@@ -518,7 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // Quick Add Modal Trigger
     document.querySelectorAll('.qa-open-btn').forEach(btn => {
       btn.onclick = (e) => {
         const id = e.currentTarget.dataset.id;
@@ -529,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 12. SLIDE-OUT CART DRAWER ENGINE
+  // 9. SLIDE-OUT CART DRAWER ENGINE
   // =========================================================================
   const cartDrawer = document.getElementById('cartDrawer');
   const cartOverlay = document.getElementById('cartOverlay');
@@ -540,14 +520,12 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openCartDrawer = function () {
     window.renderCartDrawerItems();
     cartDrawer?.classList.add('active');
-    cartDrawer?.setAttribute('aria-hidden', 'false');
     cartOverlay?.classList.add('active');
     document.body.style.overflow = 'hidden';
   };
 
   window.closeCartDrawer = function () {
     cartDrawer?.classList.remove('active');
-    cartDrawer?.setAttribute('aria-hidden', 'true');
     cartOverlay?.classList.remove('active');
     document.body.style.overflow = '';
   };
@@ -565,10 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   cartDrawerClose?.addEventListener('click', window.closeCartDrawer);
   cartOverlay?.addEventListener('click', window.closeCartDrawer);
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') window.closeCartDrawer();
-  });
 
   drawerAreaSelect?.addEventListener('change', (e) => {
     activeAreaId = e.target.value;
@@ -614,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (drawerAreaSelect) drawerAreaSelect.value = activeAreaId;
 
     if (cart.length === 0) {
-      if (container) container.innerHTML = `<p style="text-align:center; color: var(--text-muted, #8c8173); padding: 3rem 0;">Your shopping bag is empty.</p>`;
+      if (container) container.innerHTML = `<p style="text-align:center; color: #8c8173; padding: 3rem 0;">Your shopping bag is empty.</p>`;
       if (subtotalEl) subtotalEl.textContent = 'KD 0.000';
       if (deliveryEl) deliveryEl.textContent = 'KD 0.000';
       if (totalEl) totalEl.textContent = 'KD 0.000';
@@ -653,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="cart-item__price" style="font-weight: 700; font-size: 0.85rem; color: #181512;">KD ${linePrice.toFixed(3)}</span>
               </div>
             </div>
-            <button type="button" class="drawer-remove-btn" data-idx="${idx}" style="background: none; border: none; color: #b33939; font-size: 1.1rem; cursor: pointer; padding: 4px;" title="Remove">&times;</button>
+            <button type="button" class="drawer-remove-btn" data-idx="${idx}" style="background: none; border: none; color: #b33939; font-size: 1.1rem; cursor: pointer; padding: 4px;">&times;</button>
           </div>
         `;
       }).join('');
@@ -703,17 +677,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const discountAmount = subtotal * drawerDiscount;
     const finalTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
 
-    if (drawerAreaSelect) {
-      Array.from(drawerAreaSelect.options).forEach(opt => {
-        const areaData = KUWAIT_AREAS.find(a => a.id === opt.value);
-        if (areaData) {
-          opt.textContent = isFree
-            ? `${areaData.nameEn} (KD 0.000 FREE)`
-            : `${areaData.nameEn} (KD ${areaData.fee.toFixed(3)})`;
-        }
-      });
-    }
-
     if (subtotalEl) subtotalEl.textContent = `KD ${subtotal.toFixed(3)}`;
     if (deliveryEl) {
       deliveryEl.textContent = isFree ? 'KD 0.000 FREE' : `KD ${deliveryFee.toFixed(3)}`;
@@ -759,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // =========================================================================
-  // 13. QUICK ADD CONFIRMATION MODAL ENGINE (WITH CONFIRM BUTTON)
+  // 10. QUICK ADD CONFIRMATION MODAL
   // =========================================================================
   const qaOverlay = document.getElementById('quickAddOverlay');
   const qaClose = document.getElementById('quickAddClose');
@@ -794,7 +757,6 @@ document.addEventListener('DOMContentLoaded', () => {
         : `<span class="price-curr">KD ${activePrice.toFixed(3)}</span>`;
     }
 
-    // Populate Size Buttons
     const sizesBox = document.getElementById('qaSizes');
     if (sizesBox) {
       const sizes = (product.sizes && product.sizes.length) ? product.sizes : ['Standard'];
@@ -811,7 +773,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Populate Color Swatches
     const colorsBox = document.getElementById('qaColors');
     if (colorsBox) {
       const colors = (product.colors && product.colors.length) ? product.colors : [{ name: 'Standard', hex: '#181512' }];
@@ -858,7 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Explicit confirmation button action
   qaSubmit?.addEventListener('click', () => {
     if (!selectedQAProduct) return;
 
@@ -891,97 +851,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.dispatchEvent(new Event('bm_cart_updated'));
     window.syncGlobalBadges();
 
-    // Close modal and reveal updated cart drawer
     closeQuickAddModal();
     window.openCartDrawer();
   });
-
-  // =========================================================================
-  // 14. PREDICTIVE SEARCH MODAL
-  // =========================================================================
-  const searchBtn = document.getElementById('searchBtn');
-  const searchModalOverlay = document.getElementById('searchModalOverlay');
-  const closeSearchModalBtn = document.getElementById('closeSearchModalBtn');
-  const modalSearchInput = document.getElementById('modalSearchInput');
-  const instantResults = document.getElementById('modalInstantResults');
-  const recentBox = document.getElementById('recentSearchesBox');
-
-  function openSearchModal() {
-    searchModalOverlay?.classList.add('active');
-    const recent = JSON.parse(localStorage.getItem('bm_recent_searches') || '[]');
-    if (recentBox) {
-      recentBox.innerHTML = recent.length
-        ? recent.map(r => `<span class="quick-tag-chip">${r}</span>`).join('')
-        : '<span style="font-size:0.75rem; color:var(--text-muted, #8c8173)">No recent searches</span>';
-
-      recentBox.querySelectorAll('.quick-tag-chip').forEach(chip => {
-        chip.onclick = () => {
-          window.location.href = `shop.html?search=${encodeURIComponent(chip.textContent)}`;
-        };
-      });
-    }
-    setTimeout(() => modalSearchInput?.focus(), 100);
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeSearchModal() {
-    searchModalOverlay?.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  searchBtn?.addEventListener('click', openSearchModal);
-  closeSearchModalBtn?.addEventListener('click', closeSearchModal);
-  searchModalOverlay?.addEventListener('click', (e) => {
-    if (e.target === searchModalOverlay) closeSearchModal();
-  });
-
-  modalSearchInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && modalSearchInput.value.trim()) {
-      window.location.href = `shop.html?search=${encodeURIComponent(modalSearchInput.value.trim())}`;
-    }
-  });
-
-  modalSearchInput?.addEventListener('input', (e) => {
-    const query = e.target.value.trim().toLowerCase();
-    if (!query || !productCache.length) {
-      if (instantResults) instantResults.innerHTML = '';
-      return;
-    }
-
-    const lang = document.documentElement.getAttribute('lang') || 'en';
-    const matches = productCache.filter(p => {
-      const name = ((p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name).toLowerCase();
-      return name.includes(query) || (p.sku || '').toLowerCase().includes(query);
-    }).slice(0, 3);
-
-    if (instantResults) {
-      instantResults.innerHTML = matches.map(p => {
-        const title = (p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name;
-        const img = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
-        return `
-          <a href="product.html?id=${p.id}" class="instant-result-item" style="display: flex; gap: 10px; align-items: center; padding: 8px 0; text-decoration: none;">
-            <img src="${img}" alt="" class="instant-result-thumb" style="width: 44px; height: 56px; object-fit: cover; border-radius: 4px;">
-            <div class="instant-result-meta">
-              <h5 style="margin: 0 0 2px; font-size: 0.85rem; color: #181512;">${title}</h5>
-              <span class="instant-result-price" style="font-size: 0.8rem; font-weight: 700; color: #181512;">KD ${(p.salePrice || p.price).toFixed(3)}</span>
-            </div>
-          </a>
-        `;
-      }).join('');
-    }
-  });
-
-  // =========================================================================
-  // 15. PWA SERVICE WORKER REGISTRATION & CACHE REFRESH
-  // =========================================================================
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        reg.update();
-        console.log('Baitul Manal: PWA Service Worker Registered & Checked for Updates.');
-      })
-      .catch(err => console.warn('Baitul Manal: PWA Service Worker registration failed:', err));
-  }
 
   loadInitialData();
 });

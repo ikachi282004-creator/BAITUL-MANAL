@@ -1,6 +1,6 @@
 /* ==========================================================================
    BAITUL MANAL — Customer Sanctuary Controller (assets/js/profile.js)
-   Live Order Synchronizer, Transparent Invoicing & Order Management
+   Live Order Synchronizer, Transparent Invoicing & Auto-Sync Engine
    ========================================================================== */
 
 function printOrderInvoice(orderId, subtotal, delivery, total) {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'CANCELLED': { label: '🔴 Cancelled', color: '#c0392b', bg: 'rgba(231, 76, 60, 0.15)', stage: -1 }
   };
 
-  // Safe Tab Switching
+  // Switch Auth Tabs
   if (tabLogin) {
     tabLogin.addEventListener('click', function () {
       tabLogin.classList.add('active');
@@ -120,15 +120,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Active Session Verification
   var activeUser = null;
-  var savedUser = localStorage.getItem('bm_customer_user');
-  if (savedUser) {
-    try {
-      activeUser = JSON.parse(savedUser);
-      showDashboard(activeUser);
-    } catch (err) {
-      localStorage.removeItem('bm_customer_user');
+  function syncUserFromStorage() {
+    var savedUser = localStorage.getItem('bm_customer_user');
+    if (savedUser) {
+      try {
+        activeUser = JSON.parse(savedUser);
+        showDashboard(activeUser);
+      } catch (err) {
+        localStorage.removeItem('bm_customer_user');
+      }
     }
   }
+
+  syncUserFromStorage();
+
+  // Instant State Refresh on Browser Back/Forward Navigation (bfcache bypass)
+  window.addEventListener('pageshow', function (event) {
+    if (activeUser && activeUser.phone) {
+      loadOrders(activeUser.phone);
+    } else {
+      syncUserFromStorage();
+    }
+  });
 
   // Handle Registration
   if (formRegister) {
@@ -303,14 +316,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Fetch and Render Orders
+  // Fetch and Render Orders (Anti-Cache Guaranteed)
   async function loadOrders(phone) {
     if (!ordersFeedContainer) return;
-    ordersFeedContainer.innerHTML = '<p style="text-align:center; color:#8c8173; padding:2rem 0;">Synchronizing dispatches with atelier...</p>';
 
     try {
       var cleanPhone = phone.replace(/\D/g, '');
-      var res = await fetch(API_BASE + '/api/customer/orders?phone=' + encodeURIComponent(cleanPhone) + '&t=' + Date.now());
+      var res = await fetch(API_BASE + '/api/customer/orders?phone=' + encodeURIComponent(cleanPhone) + '&_cb=' + Date.now(), {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       var orders = await res.json();
 
       if (!Array.isArray(orders) || !orders.length) {
@@ -482,4 +499,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Auto-poll orders silently every 12 seconds
+  setInterval(function () {
+    if (activeUser && activeUser.phone && profileDashboard && profileDashboard.style.display !== 'none') {
+      loadOrders(activeUser.phone);
+    }
+  }, 12000);
 });
