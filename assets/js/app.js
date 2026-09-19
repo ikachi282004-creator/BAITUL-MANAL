@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.remove('drawer-open');
     document.body.style.overflow = '';
   };
-  
+
   document.addEventListener('click', (e) => {
     const bagTrigger = e.target.closest('#headerCartBtn, #dockCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
     if (bagTrigger) {
@@ -855,8 +855,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.dispatchEvent(new Event('bm_cart_updated'));
     window.syncGlobalBadges();
 
+    // Close modal silently without auto-sliding open the drawer
     closeQuickAddModal();
-    window.openCartDrawer();
+    
+    // Provide a subtle feedback toast or badge pulse
+    const bagBadges = document.querySelectorAll('#cartCount, #dockCartCount, .cart-count-badge');
+    bagBadges.forEach(badge => {
+      badge.classList.add('badge-bump');
+      setTimeout(() => badge.classList.remove('badge-bump'), 400);
+    });
   });
 
   loadInitialData();
