@@ -1,23 +1,6 @@
 /**
  * BAITUL MANAL — Master Application Controller (app.js)
- * Fully Unified & Complete Drop-in Script
- * 
- * Features Included:
- * 1. Global badge counting engine for Cart & Wishlist across mobile/desktop & all tabs
- * 2. Multi-slide vertical announcement bar ticker
- * 3. Floating concierge deck (WhatsApp pulse + smart scroll-to-top)
- * 4. Sticky luxury header elevation
- * 5. Mobile navigation drawer
- * 6. Hero progress ticker engine with synchronized bars
- * 7. Feature 1: Scroll-driven reveal engine (IntersectionObserver)
- * 8. Feature 5: Interactive 3D card perspective tilt
- * 9. Feature 7: 1-Row incremental stepper for New Arrivals (+4 items, Show Less)
- * 10. 5 Distinct Category Rails with smooth horizontal arrow controls
- * 11. Slide-out cart drawer with Kuwait delivery rates & KD 20.000 auto-free unlock
- * 12. Promo voucher privilege validation (EID10 / MANAL10 / BM10)
- * 13. Quick-Add modal with size & color pickers
- * 14. Global predictive search modal with typeahead & recent search tags
- * 15. Global PWA Service Worker Registration (/sw.js)
+ * Fully Unified & Complete Drop-in Script with Live Backend Sync & Cache-Busting
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let productCache = [];
   let drawerDiscount = 0;
   let currentArrivalFilter = 'all';
+
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://baitul-manal-1.onrender.com';
+
+  const STATIC_FALLBACK = 'assets/data/products.json';
 
   // Kuwait Governorates & Base Shipping Rates Matrix
   const KUWAIT_AREAS = [
@@ -92,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Initial badge update & reactive cross-tab events
   window.syncGlobalBadges();
   window.addEventListener('storage', window.syncGlobalBadges);
   window.addEventListener('bm_cart_updated', window.syncGlobalBadges);
@@ -236,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // =========================================================================
   // 8. FEATURE 5: 3D CARD PERSPECTIVE TILT
-  // =========================================
+  // =========================================================================
   function init3DCardTilt() {
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
       document.querySelectorAll('.arrival-card, .arch-card').forEach(card => {
@@ -259,15 +247,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 9. HOMEPAGE CATALOG & MULTI-SLIDERS
+  // 9. HOMEPAGE CATALOG & MULTI-SLIDERS (LIVE BACKEND FETCH + FALLBACK)
   // =========================================================================
   const featuredGrid = document.getElementById('featuredGrid');
   const arrivalTabs = document.querySelectorAll('#arrivalsTabs .tab-pill');
 
+  async function fetchLiveCatalog() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    try {
+      const cacheBuster = `?t=${new Date().getTime()}`;
+      const res = await fetch(`${API_BASE}/api/admin/products${cacheBuster}`, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`API status ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+      throw new Error('API returned empty catalog payload');
+    } catch (apiErr) {
+      console.warn('[App] Backend unreachable, loading static fallback...', apiErr.message);
+      const localRes = await fetch(STATIC_FALLBACK);
+      if (!localRes.ok) throw new Error('Local fallback products.json missing');
+      return await localRes.json();
+    }
+  }
+
   async function loadInitialData() {
     try {
-      const res = await fetch('assets/data/products.json');
-      productCache = await res.json();
+      productCache = await fetchLiveCatalog();
 
       if (featuredGrid) renderArrivals(productCache);
 
@@ -310,10 +326,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     featuredGrid.innerHTML = displayItems.map((p, idx) => {
       const isFav = wishlist.includes(p.id);
-      const title = p.name[lang] || p.name.en;
-      const onSale = p.salePrice !== null && p.salePrice < p.price;
+      const title = (p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name;
+      const onSale = p.salePrice !== null && p.salePrice !== undefined && Number(p.salePrice) < Number(p.price);
       const discount = onSale ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
       const isNewRowItem = animateNewRow && idx >= (currentVisibleCount - ITEMS_PER_ROW);
+      const mainImg = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
+      const altImg = p.images?.[1] || mainImg;
+      const sizes = Array.isArray(p.sizes) ? p.sizes : ['Standard'];
 
       return `
         <article class="arrival-card ${isNewRowItem ? 'arrival-card--animate-in' : ''}" data-id="${p.id}">
@@ -328,12 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
 
             <a href="product.html?id=${p.id}">
-              <img src="${p.images[0]}" alt="${title}" class="arrival-card__img arrival-card__img--main" loading="lazy">
-              ${p.images[1] ? `<img src="${p.images[1]}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
+              <img src="${mainImg}" alt="${title}" class="arrival-card__img arrival-card__img--main" loading="lazy">
+              ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
             <div class="arrival-card__quick">
-              ${p.sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
+              ${sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
               <button class="size-tag-btn qa-open-btn" data-id="${p.id}" style="background:var(--primary-gold); color:#fff; border-color:var(--primary-gold)">+</button>
             </div>
           </div>
@@ -343,9 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="arrival-card__title"><a href="product.html?id=${p.id}">${title}</a></h3>
             <div class="arrival-card__pricing">
               ${onSale
-                ? `<span class="price-curr price-curr--discount">KD ${p.salePrice.toFixed(3)}</span>
-                   <span class="price-orig">KD ${p.price.toFixed(3)}</span>`
-                : `<span class="price-curr">KD ${p.price.toFixed(3)}</span>`
+                ? `<span class="price-curr price-curr--discount">KD ${Number(p.salePrice).toFixed(3)}</span>
+                   <span class="price-orig">KD ${Number(p.price).toFixed(3)}</span>`
+                : `<span class="price-curr">KD ${Number(p.price).toFixed(3)}</span>`
               }
             </div>
           </div>
@@ -419,9 +438,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.innerHTML = items.map(p => {
       const isFav = wishlist.includes(p.id);
-      const title = p.name[lang] || p.name.en;
-      const onSale = p.salePrice !== null && p.salePrice < p.price;
+      const title = (p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name;
+      const onSale = p.salePrice !== null && p.salePrice !== undefined && Number(p.salePrice) < Number(p.price);
       const discount = onSale ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
+      const mainImg = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
+      const altImg = p.images?.[1] || mainImg;
+      const sizes = Array.isArray(p.sizes) ? p.sizes : ['Standard'];
 
       return `
         <article class="arrival-card" data-id="${p.id}">
@@ -436,12 +458,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
 
             <a href="product.html?id=${p.id}">
-              <img src="${p.images[0]}" alt="${title}" class="arrival-card__img arrival-card__img--main" loading="lazy">
-              ${p.images[1] ? `<img src="${p.images[1]}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
+              <img src="${mainImg}" alt="${title}" class="arrival-card__img arrival-card__img--main" loading="lazy">
+              ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
             <div class="arrival-card__quick">
-              ${p.sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
+              ${sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
               <button class="size-tag-btn qa-open-btn" data-id="${p.id}" style="background:var(--primary-gold); color:#fff; border-color:var(--primary-gold)">+</button>
             </div>
           </div>
@@ -451,9 +473,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="arrival-card__title"><a href="product.html?id=${p.id}">${title}</a></h3>
             <div class="arrival-card__pricing">
               ${onSale
-                ? `<span class="price-curr price-curr--discount">KD ${p.salePrice.toFixed(3)}</span>
-                   <span class="price-orig">KD ${p.price.toFixed(3)}</span>`
-                : `<span class="price-curr">KD ${p.price.toFixed(3)}</span>`
+                ? `<span class="price-curr price-curr--discount">KD ${Number(p.salePrice).toFixed(3)}</span>
+                   <span class="price-orig">KD ${Number(p.price).toFixed(3)}</span>`
+                : `<span class="price-curr">KD ${Number(p.price).toFixed(3)}</span>`
               }
             </div>
           </div>
@@ -526,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 12. SLIDE-OUT CART DRAWER ENGINE (EXPOSED GLOBALLY)
+  // 12. SLIDE-OUT CART DRAWER ENGINE
   // =========================================================================
   const cartDrawer = document.getElementById('cartDrawer');
   const cartOverlay = document.getElementById('cartOverlay');
@@ -549,7 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow = '';
   };
 
-  // Safe Bag Navigation Interceptor
   document.addEventListener('click', (e) => {
     const bagTrigger = e.target.closest('#headerCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
     if (bagTrigger) {
@@ -627,8 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (container) {
       container.innerHTML = cart.map((item, idx) => {
         const prod = productCache.find(p => p.id === item.id);
-        const title = prod ? (prod.name[currentLang] || prod.name.en) : item.id;
-        const img = prod?.images?.[0] || 'assets/images/placeholder.jpg';
+        const title = prod ? ((prod.name && typeof prod.name === 'object') ? (prod.name[currentLang] || prod.name.en) : prod.name) : item.id;
+        const img = prod?.images?.[0] || prod?.image || 'assets/images/placeholder.jpg';
         const unitPrice = prod ? (prod.salePrice || prod.price) : (item.price || 0);
         const qty = parseInt(item.qty, 10) || 1;
         const linePrice = unitPrice * qty;
@@ -742,7 +763,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (waBtn) {
       const summary = cart.map(item => {
         const p = productCache.find(prod => prod.id === item.id);
-        return `• ${p ? p.name.en : item.id} (Size: ${item.size}) x${item.qty}`;
+        const nameEn = p ? (p.name?.en || p.name) : item.id;
+        return `• ${nameEn} (Size: ${item.size}) x${item.qty}`;
       }).join('\n');
 
       const feeText = isFree ? 'FREE DELIVERY (KD 0.000)' : `KD ${deliveryFee.toFixed(3)}`;
@@ -766,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openQuickAdd(product) {
     selectedQAProduct = product;
-    selectedSize = product.sizes[0] || 'Standard';
+    selectedSize = (product.sizes && product.sizes.length) ? product.sizes[0] : 'Standard';
     selectedColor = product.colors?.[0]?.name || 'Default';
     qaQuantity = 1;
 
@@ -775,18 +797,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const qaTitle = document.getElementById('qaTitle');
     const qaPricing = document.getElementById('qaPricing');
 
-    if (qaImg) qaImg.src = product.images[0];
-    if (qaTitle) qaTitle.textContent = product.name[currentLang] || product.name.en;
+    if (qaImg) qaImg.src = product.images?.[0] || product.image || 'assets/images/placeholder.jpg';
+    if (qaTitle) qaTitle.textContent = (product.name && typeof product.name === 'object') ? (product.name[currentLang] || product.name.en) : product.name;
 
     if (qaPricing) {
       qaPricing.innerHTML = product.salePrice
-        ? `<span class="price-curr price-curr--discount">KD ${product.salePrice.toFixed(3)}</span> <span class="price-orig">KD ${product.price.toFixed(3)}</span>`
-        : `<span class="price-curr">KD ${product.price.toFixed(3)}</span>`;
+        ? `<span class="price-curr price-curr--discount">KD ${Number(product.salePrice).toFixed(3)}</span> <span class="price-orig">KD ${Number(product.price).toFixed(3)}</span>`
+        : `<span class="price-curr">KD ${Number(product.price).toFixed(3)}</span>`;
     }
 
     const sizesBox = document.getElementById('qaSizes');
     if (sizesBox) {
-      sizesBox.innerHTML = product.sizes.map((s, idx) => `
+      const sizes = (product.sizes && product.sizes.length) ? product.sizes : ['Standard'];
+      sizesBox.innerHTML = sizes.map((s, idx) => `
         <button type="button" class="qa-size-btn ${idx === 0 ? 'selected' : ''}" data-size="${s}">${s}</button>
       `).join('');
 
@@ -912,29 +935,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const lang = document.documentElement.getAttribute('lang') || 'en';
     const matches = productCache.filter(p => {
-      const name = (p.name[lang] || p.name.en).toLowerCase();
+      const name = ((p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name).toLowerCase();
       return name.includes(query) || (p.sku || '').toLowerCase().includes(query);
     }).slice(0, 3);
 
     if (instantResults) {
-      instantResults.innerHTML = matches.map(p => `
-        <a href="product.html?id=${p.id}" class="instant-result-item" style="display: flex; gap: 10px; align-items: center; padding: 8px 0; text-decoration: none;">
-          <img src="${p.images[0]}" alt="" class="instant-result-thumb" style="width: 44px; height: 56px; object-fit: cover; border-radius: 4px;">
-          <div class="instant-result-meta">
-            <h5 style="margin: 0 0 2px; font-size: 0.85rem; color: #181512;">${p.name[lang] || p.name.en}</h5>
-            <span class="instant-result-price" style="font-size: 0.8rem; font-weight: 700; color: #181512;">KD ${(p.salePrice || p.price).toFixed(3)}</span>
-          </div>
-        </a>
-      `).join('');
+      instantResults.innerHTML = matches.map(p => {
+        const title = (p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name;
+        const img = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
+        return `
+          <a href="product.html?id=${p.id}" class="instant-result-item" style="display: flex; gap: 10px; align-items: center; padding: 8px 0; text-decoration: none;">
+            <img src="${img}" alt="" class="instant-result-thumb" style="width: 44px; height: 56px; object-fit: cover; border-radius: 4px;">
+            <div class="instant-result-meta">
+              <h5 style="margin: 0 0 2px; font-size: 0.85rem; color: #181512;">${title}</h5>
+              <span class="instant-result-price" style="font-size: 0.8rem; font-weight: 700; color: #181512;">KD ${(p.salePrice || p.price).toFixed(3)}</span>
+            </div>
+          </a>
+        `;
+      }).join('');
     }
   });
 
   // =========================================================================
-  // 15. PWA SERVICE WORKER REGISTRATION
+  // 15. PWA SERVICE WORKER REGISTRATION & CACHE REFRESH
   // =========================================================================
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Baitul Manal: PWA Service Worker Registered. Scope:', reg.scope))
+      .then(reg => {
+        reg.update();
+        console.log('Baitul Manal: PWA Service Worker Registered & Checked for Updates.');
+      })
       .catch(err => console.warn('Baitul Manal: PWA Service Worker registration failed:', err));
   }
 
