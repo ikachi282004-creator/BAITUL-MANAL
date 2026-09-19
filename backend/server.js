@@ -205,6 +205,32 @@ app.post('/api/orders', (req, res) => {
   });
 });
 
+// Update Order Dispatch Status (Stage Confirmation Engine)
+app.patch('/api/orders/:id/status', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const validStatuses = ['PENDING_DISPATCH', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid order status stage' });
+  }
+
+  const sql = `UPDATE orders SET fulfillment_status = ? WHERE order_id = ? OR id = ?`;
+  db.run(sql, [status, id, id], function (err) {
+    if (err) {
+      console.error('Failed to update order status:', err.message);
+      return res.status(500).json({ error: 'Database update failed' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Order reference not found' });
+    }
+
+    console.log(`🚚 Status Updated: Order ${id} -> ${status}`);
+    res.json({ success: true, orderId: id, status });
+  });
+});
+
 // Retrieve All Orders (Admin Dispatches View - Live No-Cache)
 app.get('/api/orders', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

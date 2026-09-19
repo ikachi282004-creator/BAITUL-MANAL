@@ -4,56 +4,64 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Track Your Order — BAITUL MANAL Kuwait</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
     :root {
       --bm-gold: #c5a880;
       --bm-gold-dark: #9e825a;
       --bm-dark: #181512;
-      --bm-card-bg: #fff;
+      --bm-card-bg: #ffffff;
       --bm-border: #d6cbba;
+      --bm-green: #27ae60;
     }
 
     body {
-      background-color: #fbf9f6;
+      background-color: #faf8f5;
       color: var(--bm-dark);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Outfit', -apple-system, sans-serif;
       margin: 0;
       padding: 0;
     }
 
     .container {
-      max-width: 800px;
-      margin: 60px auto;
-      padding: 0 20px;
+      max-width: 780px;
+      margin: 40px auto 60px;
+      padding: 0 16px;
     }
 
     .tracking-card {
       background: var(--bm-card-bg);
       border: 1px solid var(--bm-border);
-      border-radius: 10px;
-      padding: 32px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      border-radius: 12px;
+      padding: 32px 24px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.04);
     }
 
     .title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 2rem;
+      font-size: 1.85rem;
+      font-weight: 700;
       color: var(--bm-dark);
-      margin-bottom: 8px;
+      margin: 0 0 6px;
       text-align: center;
     }
 
     .subtitle {
       color: #8c8173;
       text-align: center;
-      margin-bottom: 28px;
-      font-size: 0.95rem;
+      margin: 0 0 24px;
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
 
     .search-group {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 24px;
     }
 
@@ -62,8 +70,10 @@
       padding: 12px 16px;
       border: 1px solid var(--bm-border);
       border-radius: 6px;
-      font-size: 1rem;
+      font-size: 0.95rem;
+      font-family: inherit;
       outline: none;
+      background: #fff;
     }
 
     .search-input:focus {
@@ -71,31 +81,119 @@
     }
 
     .btn-track {
-      background: var(--bm-gold);
-      color: #000;
+      background: var(--bm-dark);
+      color: #ffffff;
       border: none;
-      padding: 12px 24px;
+      padding: 12px 22px;
       border-radius: 6px;
       font-weight: 700;
+      font-family: inherit;
+      font-size: 0.92rem;
       cursor: pointer;
       transition: background 0.2s;
+      white-space: nowrap;
     }
 
     .btn-track:hover {
-      background: #b5966d;
+      background: #332d27;
+    }
+
+    /* Mobile Responsive Timeline */
+    .timeline-wrapper {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      position: relative;
+      gap: 4px;
+      text-align: center;
+      margin: 20px 0 24px;
+      padding: 18px 12px;
+      background: #faf8f5;
+      border-radius: 8px;
+      border: 1px solid rgba(214,203,186,0.6);
+    }
+
+    .step-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #e9e4dc;
+      color: #8c8173;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px;
+      transition: all 0.3s ease;
+    }
+
+    .step-circle.active, .step-circle.completed {
+      background: var(--bm-green);
+      color: #ffffff;
+    }
+
+    .step-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #8c8173;
+      display: block;
+      line-height: 1.2;
+    }
+
+    .step-label.active {
+      color: #181512;
+    }
+
+    .step-subtext {
+      font-size: 0.65rem;
+      color: #a0978b;
+      display: block;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 580px) {
+      .container {
+        margin: 20px auto 40px;
+        padding: 0 12px;
+      }
+      .tracking-card {
+        padding: 22px 14px;
+      }
+      .search-group {
+        flex-direction: column;
+      }
+      .btn-track {
+        width: 100%;
+        padding: 12px;
+      }
+      .step-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+      }
+      .step-label {
+        font-size: 0.68rem;
+      }
+      .step-subtext {
+        display: none;
+      }
     }
 
     .nav-links {
-      margin-top: 24px;
+      margin-top: 28px;
       text-align: center;
     }
 
     .nav-links a {
       color: var(--bm-gold-dark);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       margin: 0 10px;
       font-weight: 600;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -114,14 +212,13 @@
 
       <div class="nav-links">
         <a href="index.html">← Return to Boutique</a>
-        <a href="my-profile.html">View Order History</a>
+        <a href="shop.html">Explore Collection</a>
       </div>
     </div>
   </div>
 
   <script src="assets/js/track-order.js"></script>
   <script>
-    // Auto-detect URL parameter (?id=...) from checkout redirect
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const orderId = urlParams.get('id');

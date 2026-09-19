@@ -48,14 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  logoutBtn.addEventListener('click', () => {
+  logoutBtn?.addEventListener('click', () => {
     localStorage.removeItem('bm_admin_token');
     location.reload();
   });
 
   async function unlockPortal() {
-    gateCard.style.display = 'none';
-    dashboardView.style.display = 'block';
+    if (gateCard) gateCard.style.display = 'none';
+    if (dashboardView) dashboardView.style.display = 'block';
     await Promise.all([loadCatalog(), loadOrders()]);
   }
 
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderInventoryGrid() {
+    if (!inventoryGrid) return;
     if (!catalog.length) {
       inventoryGrid.innerHTML = '<p style="color:#888;">No items in catalog. Click "+ Add New Dress" to begin.</p>';
       return;
@@ -200,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  document.getElementById('saveAllInventoryBtn').addEventListener('click', async () => {
+  document.getElementById('saveAllInventoryBtn')?.addEventListener('click', async () => {
     const cards = document.querySelectorAll('.product-editor-card');
     const updatedCatalog = [];
 
@@ -252,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await syncToBackend(updatedCatalog);
   });
 
-  document.getElementById('addNewProductBtn').addEventListener('click', () => {
+  document.getElementById('addNewProductBtn')?.addEventListener('click', () => {
     const newSku = 'BM-KW-' + Math.floor(100 + Math.random() * 900);
     catalog.unshift({
       id: newSku,
@@ -282,11 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function renderRawJson() {
-    document.getElementById('rawJsonTextarea').value = JSON.stringify(catalog, null, 2);
+    const el = document.getElementById('rawJsonTextarea');
+    if (el) el.value = JSON.stringify(catalog, null, 2);
   }
 
-  document.getElementById('saveRawJsonBtn').addEventListener('click', async () => {
-    const rawVal = document.getElementById('rawJsonTextarea').value;
+  document.getElementById('saveRawJsonBtn')?.addEventListener('click', async () => {
+    const rawVal = document.getElementById('rawJsonTextarea')?.value;
     try {
       const parsed = JSON.parse(rawVal);
       await syncToBackend(parsed);
@@ -320,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Orders Retrieval with Live Cache-Busting & Status Styling
+  // Interactive Live Stage Selector in Dispatches View
   async function loadOrders() {
     const tbody = document.getElementById('ordersTableBody');
     if (tbody) {
@@ -340,18 +342,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
       tbody.innerHTML = ordersList.map(o => `
         <tr>
-          <td><strong style="color:var(--bm-gold);">${o.orderId}</strong><br><small style="color:#666;">${o.date ? new Date(o.date).toLocaleDateString('en-GB') : ''}</small></td>
+          <td>
+            <strong style="color:var(--bm-gold);">${o.orderId}</strong><br>
+            <small style="color:#888;">${o.date ? new Date(o.date).toLocaleDateString('en-GB') : ''}</small>
+          </td>
           <td>${o.recipient?.name || 'Customer'}<br><small style="color:#888;">${o.recipient?.phone || ''}</small></td>
-          <td>${o.recipient?.governorate || ''}<br><small style="color:#888;">${o.recipient?.address || ''}</small></td>
+          <td>${o.recipient?.governorate || ''}<br><small style="color:#888; word-break: break-word;">${o.recipient?.address || ''}</small></td>
           <td>${o.paymentMethod || 'K-Net'}</td>
           <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
           <td>
-            <span style="background: rgba(197, 168, 128, 0.15); color: var(--bm-gold); padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">
-              ${o.status || 'PENDING_DISPATCH'}
-            </span>
+            <!-- Interactive Stage Selector -->
+            <select class="admin-status-dropdown" data-order-id="${o.orderId}" style="background: #181512; color: #c5a880; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; outline: none;">
+              <option value="PENDING_DISPATCH" ${o.status === 'PENDING_DISPATCH' ? 'selected' : ''}>🟡 Pending Dispatch</option>
+              <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>🟠 Atelier Tailoring</option>
+              <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>🔵 Out for Delivery</option>
+              <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>🟢 Delivered</option>
+              <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
+            </select>
           </td>
         </tr>
       `).join('');
+
+      // Attach Live Change Listeners
+      tbody.querySelectorAll('.admin-status-dropdown').forEach(select => {
+        select.onchange = async (e) => {
+          const orderId = e.target.dataset.orderId;
+          const newStatus = e.target.value;
+          e.target.style.opacity = '0.5';
+
+          try {
+            const patchRes = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus })
+            });
+
+            const patchData = await patchRes.json();
+            if (patchRes.ok && patchData.success) {
+              e.target.style.border = '1px solid #27ae60';
+              setTimeout(() => {
+                e.target.style.border = '1px solid rgba(197, 168, 128, 0.4)';
+                e.target.style.opacity = '1';
+              }, 600);
+            } else {
+              alert(patchData.error || 'Failed to update order status.');
+              e.target.style.border = '1px solid #b33939';
+              e.target.style.opacity = '1';
+            }
+          } catch {
+            alert('Network error connecting to backend service.');
+            e.target.style.border = '1px solid #b33939';
+            e.target.style.opacity = '1';
+          }
+        };
+      });
+
     } catch (e) {
       console.error('Orders fetch error:', e);
       if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches from server.</td></tr>';
