@@ -7393,3 +7393,81 @@ a[href^="tel:"],
     color: #c5a880 !important;
   }
 }
+/* ==========================================================================
+   FORCE COMPLETE VISIBILITY OF ANNOUNCEMENT TEXT ON MOBILE
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Allow bar to expand height to fit the full text */
+  aside.top-bar {
+    height: auto !important;
+    min-height: 40px !important;
+    padding: 6px 0 !important;
+    overflow: visible !important;
+  }
+
+  .top-bar__inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
+    width: 100% !important;
+  }
+
+  .top-bar__slider {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 28px !important;
+    overflow: visible !important;
+  }
+
+  .top-bar__track {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .top-bar__slide {
+    display: none !important;
+    height: auto !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .top-bar__slide.active {
+    display: flex !important;
+  }
+
+  /* Badge styling on mobile */
+  .top-bar__slide .promo-pill {
+    font-size: 0.58rem !important;
+    padding: 2px 5px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* FORCE FULL TEXT TO WRAP AND NEVER CLIP */
+  .top-bar__text,
+  .top-bar__slide span:not(.promo-pill) {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    font-size: 0.70rem !important;
+    line-height: 1.25 !important;
+    display: inline !important;
+    color: #e5dfd5 !important;
+  }
+
+  /* Language button stays compact */
+  .top-bar__actions {
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+  }
+
+  .lang-switch-btn {
+    font-size: 0.70rem !important;
+    padding: 2px 7px !important;
+    line-height: 1.2 !important;
+    border-radius: 4px !important;
+  }
+}
