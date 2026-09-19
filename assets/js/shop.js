@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Backend API URL mapping
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://baitul-manal.onrender.com'; // Adjust if your Render Web Service name differs
+    : 'https://baitul-manal-1.onrender.com'; // Adjust if your Render Web Service name differs
 
   const STATIC_FALLBACK = 'assets/data/products.json';
 
