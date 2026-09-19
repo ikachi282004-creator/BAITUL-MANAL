@@ -23,7 +23,7 @@
       padding: 24px;
     }
 
-    .container { max-width: 1400px; margin: 0 auto; }
+    .container { max-width: 1500px; margin: 0 auto; }
 
     .header {
       display: flex;
@@ -51,9 +51,13 @@
       background: transparent;
       border: 1px solid var(--bm-gold);
       color: var(--bm-gold);
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
     }
     .btn-outline:hover { background: rgba(197, 168, 128, 0.1); }
-    .btn-danger { background: var(--bm-red); color: #fff; }
+    .btn-danger { background: var(--bm-red); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     .btn-danger:hover { background: #c0392b; }
 
     .gate-box {
@@ -85,7 +89,7 @@
 
     .inventory-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
       gap: 24px;
       margin-top: 18px;
     }
@@ -102,9 +106,8 @@
 
     .preview-header {
       position: relative;
-      height: 240px;
+      height: 250px;
       background: #111;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -118,24 +121,34 @@
       position: absolute;
       top: 12px;
       left: 12px;
-      background: var(--bm-gold);
-      color: #000;
-      font-size: 0.7rem;
+      background: #b33939;
+      color: #fff;
+      font-size: 0.72rem;
       font-weight: 800;
       padding: 4px 8px;
-      border-radius: 3px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-preview-new {
+      position: absolute;
+      top: 12px;
+      left: 70px;
+      background: var(--bm-gold);
+      color: #000;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
     }
     .badge-preview-cat {
       position: absolute;
       top: 12px;
       right: 12px;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       color: #fff;
       font-size: 0.7rem;
       padding: 4px 8px;
-      border-radius: 3px;
+      border-radius: 4px;
       border: 1px solid #444;
     }
 
@@ -157,7 +170,7 @@
       gap: 4px;
     }
     label {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #aaa;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -176,6 +189,24 @@
       border-color: var(--bm-gold);
     }
     textarea { resize: vertical; min-height: 55px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #131317;
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid #292933;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+    .checkbox-row span {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
 
     .card-actions {
       display: flex;
@@ -220,7 +251,7 @@
       <div class="header">
         <div>
           <h1>BAITUL MANAL — Studio Control</h1>
-          <small style="color:#888;">Live Visual Inventory & Dispatch Console</small>
+          <small style="color:#888;">Live Visual Inventory, Sale Tags & Dispatch Console</small>
         </div>
         <button class="btn-outline" id="logoutBtn">Lock Terminal</button>
       </div>
@@ -234,10 +265,10 @@
 
       <!-- INVENTORY TAB -->
       <div id="paneInventory">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h2 style="font-size: 1.2rem;">Visual Catalog Editor</h2>
-            <span style="color:#888; font-size:0.85rem;">Modify image links, sale tags, prices, or descriptions below.</span>
+            <h2 style="font-size: 1.2rem;">Visual Catalog & Sale Tag Manager</h2>
+            <span style="color:#888; font-size:0.85rem;">Toggle sale tags, modify discount pricing, update images, and manage colors.</span>
           </div>
           <div style="display: flex; gap: 10px;">
             <button class="btn-outline" id="addNewProductBtn">+ Add New Dress</button>
@@ -246,7 +277,7 @@
         </div>
 
         <div class="inventory-grid" id="inventoryGridContainer">
-          <!-- Dynamically populated -->
+          <!-- Populated dynamically by admin.js -->
         </div>
       </div>
 
@@ -278,7 +309,6 @@
           <button class="btn" id="saveRawJsonBtn">💾 Overwrite products.json</button>
         </div>
         <textarea id="rawJsonTextarea" class="raw-editor" spellcheck="false"></textarea>
-        <div id="jsonStatus" style="margin-top: 8px;"></div>
       </div>
 
     </div>

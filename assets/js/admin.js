@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logoutBtn');
   const inventoryGrid = document.getElementById('inventoryGridContainer');
 
-  // Check persisted session token
   const token = localStorage.getItem('bm_admin_token');
   if (token) {
     unlockPortal();
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     await Promise.all([loadCatalog(), loadOrders()]);
   }
 
-  // Fetch Catalog with Cache-Buster
   async function loadCatalog() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/products?t=${new Date().getTime()}`, {
@@ -74,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Render Full Visual Card Editor
   function renderInventoryGrid() {
     if (!catalog.length) {
       inventoryGrid.innerHTML = '<p style="color:#888;">No items in catalog. Click "+ Add New Dress" to begin.</p>';
@@ -88,34 +85,73 @@ document.addEventListener('DOMContentLoaded', () => {
       const regularPrice = p.price || 0;
       const salePrice = p.salePrice !== undefined && p.salePrice !== null ? p.salePrice : '';
       const isSale = salePrice !== '' && Number(salePrice) < Number(regularPrice);
-      const imgUrl = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
+      const isNew = p.isNew === true;
+      const customSaleTag = p.saleTag || (isSale ? `-${Math.round(((regularPrice - salePrice) / regularPrice) * 100)}% OFF` : 'SALE');
+
+      const imgMain = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
+      const imgAlt = p.images?.[1] || '';
       const sizesStr = Array.isArray(p.sizes) ? p.sizes.join(', ') : (p.sizes || 'S, M, L, XL');
+
+      const colorsStr = Array.isArray(p.colors)
+        ? p.colors.map(c => `${c.name || 'Color'} ${c.hex || '#000'}`).join(', ')
+        : 'Standard #c5a880';
 
       return `
         <div class="product-editor-card" data-index="${idx}">
           <div class="preview-header">
-            <img src="${imgUrl}" alt="${titleEn}" id="previewImg_${idx}" onerror="this.src='https://via.placeholder.com/350x240?text=No+Image';">
-            <span class="badge-preview-sale" id="saleBadgePreview_${idx}" style="${isSale ? '' : 'display:none;'}">SALE</span>
+            <img src="${imgMain}" alt="${titleEn}" id="previewImg_${idx}" onerror="this.src='https://via.placeholder.com/350x240?text=No+Image';">
+            <span class="badge-preview-sale" id="saleBadgePreview_${idx}" style="${isSale ? '' : 'display:none;'}">${customSaleTag}</span>
+            <span class="badge-preview-new" id="newBadgePreview_${idx}" style="${isNew ? '' : 'display:none;'}">NEW</span>
             <span class="badge-preview-cat" id="catBadgePreview_${idx}">${p.category || 'Collection'}</span>
           </div>
 
           <div class="card-fields">
+            <!-- Row 1: Badges & Flags -->
             <div class="field-row">
+              <label class="checkbox-row" style="flex: 1;">
+                <input type="checkbox" class="field-is-new" ${isNew ? 'checked' : ''} 
+                  onchange="document.getElementById('newBadgePreview_${idx}').style.display = this.checked ? 'inline-block' : 'none'">
+                <span>Mark as NEW</span>
+              </label>
+
               <div class="field-group" style="flex: 2;">
+                <label>Custom Sale Tag Text</label>
+                <input type="text" value="${customSaleTag}" class="field-saletag" placeholder="-30% OFF / RAMADAN SALE"
+                  oninput="document.getElementById('saleBadgePreview_${idx}').textContent = this.value">
+              </div>
+            </div>
+
+            <!-- Row 2: SKU, Category & SubCategory -->
+            <div class="field-row">
+              <div class="field-group" style="flex: 1.5;">
                 <label>SKU / ID</label>
                 <input type="text" value="${p.id || p.sku || ''}" class="field-id">
               </div>
-              <div class="field-group" style="flex: 3;">
-                <label>Category Tag</label>
-                <input type="text" value="${p.category || ''}" class="field-category" oninput="document.getElementById('catBadgePreview_${idx}').textContent = this.value">
+              <div class="field-group" style="flex: 2;">
+                <label>Department / Category</label>
+                <input type="text" value="${p.category || 'women'}" class="field-category" 
+                  oninput="document.getElementById('catBadgePreview_${idx}').textContent = this.value">
+              </div>
+              <div class="field-group" style="flex: 2;">
+                <label>SubCategory / Rail Tag</label>
+                <input type="text" value="${p.subCategory || ''}" class="field-subcategory" placeholder="darra / maid-uniform">
               </div>
             </div>
 
-            <div class="field-group">
-              <label>Image URL</label>
-              <input type="text" value="${imgUrl}" class="field-image" oninput="document.getElementById('previewImg_${idx}').src = this.value">
+            <!-- Row 3: Images -->
+            <div class="field-row">
+              <div class="field-group" style="flex: 1;">
+                <label>Main Image URL</label>
+                <input type="text" value="${imgMain}" class="field-image-main" 
+                  oninput="document.getElementById('previewImg_${idx}').src = this.value">
+              </div>
+              <div class="field-group" style="flex: 1;">
+                <label>Hover Flip Image URL (Alt)</label>
+                <input type="text" value="${imgAlt}" class="field-image-alt" placeholder="assets/images/...">
+              </div>
             </div>
 
+            <!-- Row 4: Titles -->
             <div class="field-row">
               <div class="field-group">
                 <label>Title (English)</label>
@@ -127,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
 
+            <!-- Row 5: Pricing -->
             <div class="field-row">
               <div class="field-group">
                 <label>Regular Price (KD)</label>
@@ -137,19 +174,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="number" step="0.001" placeholder="Empty if regular" value="${salePrice}" class="field-saleprice" 
                   oninput="document.getElementById('saleBadgePreview_${idx}').style.display = (this.value && Number(this.value) > 0) ? 'inline-block' : 'none'">
               </div>
-            </div>
-
-            <div class="field-row">
-              <div class="field-group">
-                <label>Sizes (comma separated)</label>
-                <input type="text" value="${sizesStr}" class="field-sizes">
-              </div>
               <div class="field-group">
                 <label>Stock Count</label>
                 <input type="number" value="${p.stock !== undefined ? p.stock : 10}" class="field-stock">
               </div>
             </div>
 
+            <!-- Row 6: Sizes & Color Swatches -->
+            <div class="field-group">
+              <label>Sizes (comma separated)</label>
+              <input type="text" value="${sizesStr}" class="field-sizes">
+            </div>
+
+            <div class="field-group">
+              <label>Color Swatches (Name #hex, separated by comma)</label>
+              <input type="text" value="${colorsStr}" class="field-colors" placeholder="Black #000000, Gold #c5a880, Navy #0a192f">
+            </div>
+
+            <!-- Row 7: Description -->
             <div class="field-group">
               <label>Product Description</label>
               <textarea class="field-desc">${descEn}</textarea>
@@ -172,26 +214,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cards.forEach(card => {
       const id = card.querySelector('.field-id').value.trim();
+      const isNew = card.querySelector('.field-is-new').checked;
+      const saleTag = card.querySelector('.field-saletag').value.trim();
       const category = card.querySelector('.field-category').value.trim();
-      const image = card.querySelector('.field-image').value.trim();
+      const subCategory = card.querySelector('.field-subcategory').value.trim();
+      const imageMain = card.querySelector('.field-image-main').value.trim();
+      const imageAlt = card.querySelector('.field-image-alt').value.trim();
       const nameEn = card.querySelector('.field-name-en').value.trim();
       const nameAr = card.querySelector('.field-name-ar').value.trim();
       const price = parseFloat(card.querySelector('.field-price').value) || 0;
       const saleVal = card.querySelector('.field-saleprice').value.trim();
       const salePrice = saleVal ? parseFloat(saleVal) : null;
-      const sizes = card.querySelector('.field-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
       const stock = parseInt(card.querySelector('.field-stock').value, 10) || 0;
+      const sizes = card.querySelector('.field-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
+
+      // Parse colors string: "Name #HEX, Name #HEX"
+      const colors = card.querySelector('.field-colors').value.split(',').map(c => {
+        const parts = c.trim().split(' ');
+        const hex = parts.find(p => p.startsWith('#')) || '#c5a880';
+        const name = parts.filter(p => !p.startsWith('#')).join(' ') || 'Standard';
+        return { name, hex };
+      }).filter(c => c.name);
+
       const desc = card.querySelector('.field-desc').value.trim();
+
+      const images = [imageMain];
+      if (imageAlt) images.push(imageAlt);
 
       updatedCatalog.push({
         id,
         sku: id,
         category,
+        subCategory,
+        isNew,
+        saleTag: saleTag || null,
         name: { en: nameEn, ar: nameAr },
         price,
         salePrice,
-        images: [image],
+        images,
         sizes,
+        colors: colors.length ? colors : [{ name: 'Original', hex: '#c5a880' }],
         stock,
         description: { en: desc, ar: '' }
       });
@@ -202,31 +264,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add Product Button
   document.getElementById('addNewProductBtn').addEventListener('click', () => {
-    const newSku = 'BM-DRESS-' + Math.floor(100 + Math.random() * 900);
+    const newSku = 'BM-KW-' + Math.floor(100 + Math.random() * 900);
     catalog.unshift({
       id: newSku,
       sku: newSku,
-      category: 'Abayas',
-      name: { en: 'New Couture Dress', ar: 'فستان جديد' },
+      category: 'women',
+      subCategory: 'darra',
+      isNew: true,
+      saleTag: '-20% OFF',
+      name: { en: 'New Couture Darra', ar: 'درّاعة كوتور جديدة' },
       price: 25.000,
-      salePrice: null,
+      salePrice: 20.000,
       images: ['assets/images/placeholder.jpg'],
       sizes: ['S', 'M', 'L', 'XL'],
-      stock: 12,
-      description: { en: 'Luxury tailored silhouette from Fahaheel boutique.', ar: '' }
+      colors: [{ name: 'Emerald', hex: '#1b4d3e' }, { name: 'Gold', hex: '#c5a880' }],
+      stock: 10,
+      description: { en: 'Handcrafted luxury piece from Baitul Manal Atelier.', ar: '' }
     });
     renderInventoryGrid();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   window.removeProductCard = (idx) => {
-    if (confirm(`Are you sure you want to remove ${catalog[idx]?.name?.en || 'this dress'}?`)) {
+    if (confirm(`Are you sure you want to remove ${catalog[idx]?.name?.en || 'this item'}?`)) {
       catalog.splice(idx, 1);
       renderInventoryGrid();
     }
   };
 
-  // Raw JSON sync
   function renderRawJson() {
     document.getElementById('rawJsonTextarea').value = JSON.stringify(catalog, null, 2);
   }
@@ -266,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Orders Retrieval
   async function loadOrders() {
     try {
       const res = await fetch(`${API_BASE}/api/orders`);
@@ -291,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Tabs navigation
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
