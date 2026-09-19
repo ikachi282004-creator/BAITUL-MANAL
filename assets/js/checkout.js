@@ -13,12 +13,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const STATIC_FALLBACK = 'assets/data/products.json';
 
   const KUWAIT_AREAS = [
-    { id: 'ahmadi', name: 'Al Ahmadi & Fahaheel (Fast Hub)', fee: 1.500 },
-    { id: 'capital', name: 'Kuwait City & Al Asimah', fee: 2.000 },
-    { id: 'hawally', name: 'Hawally & Salmiya', fee: 2.000 },
-    { id: 'farwaniya', name: 'Farwaniya & Khaitan', fee: 2.000 },
-    { id: 'mubarak', name: 'Mubarak Al-Kabeer', fee: 2.000 },
-    { id: 'jahra', name: 'Al Jahra & Suburbs', fee: 2.500 }
+    { id: 'ahmadi', nameEn: 'Al Ahmadi (Fast Hub)', fee: 1.500 },
+    { id: 'capital', nameEn: 'Capital / Al Asimah', fee: 2.000 },
+    { id: 'hawally', nameEn: 'Hawally & Salmiya', fee: 2.000 },
+    { id: 'farwaniya', nameEn: 'Farwaniya & Khaitan', fee: 2.000 },
+    { id: 'mubarak', nameEn: 'Mubarak Al-Kabeer', fee: 2.000 },
+    { id: 'jahra', nameEn: 'Al Jahra & Suburbs', fee: 2.500 }
   ];
 
   let cart = [];
@@ -28,54 +28,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     cart = [];
   }
 
-  // Target all possible DOM element IDs found in checkout.html
-  const summaryTitle = document.querySelector('.summary-card-title, h3, h2') || document.querySelector('aside h3');
-  const summaryContainer = document.getElementById('checkoutSummaryItems') || 
-                           document.getElementById('checkoutOrderItems') || 
-                           document.getElementById('orderSummaryItems') ||
-                           document.querySelector('.checkout-items-list') ||
-                           document.querySelector('.order-summary-items');
+  // Exact DOM mapping matching checkout.html
+  const summaryItemCount = document.getElementById('summaryItemCount');
+  const summaryItemsList = document.getElementById('summaryItemsList');
+  const tierNoticeText = document.getElementById('tierNoticeText');
+  const tierStatusPill = document.getElementById('tierStatusPill');
+  const tierFill = document.getElementById('tierFill');
+  const checkoutSubtotal = document.getElementById('checkoutSubtotal');
+  const checkoutDelivery = document.getElementById('checkoutDelivery');
+  const checkoutTotal = document.getElementById('checkoutTotal');
+  const btnPayAmount = document.getElementById('btnPayAmount');
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+  const custGovernorate = document.getElementById('custGovernorate');
 
-  const subtotalEl = document.getElementById('checkoutSubtotal') || 
-                     document.getElementById('summarySubtotal') ||
-                     document.querySelector('[data-ledger="subtotal"]');
+  // Interactive Payment Accordion Handlers
+  document.querySelectorAll('input[name="payMethod"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      document.querySelectorAll('.pay-method-card').forEach(card => card.classList.remove('active'));
+      e.target.closest('.pay-method-card')?.classList.add('active');
 
-  const deliveryEl = document.getElementById('checkoutDelivery') || 
-                     document.getElementById('summaryDelivery') ||
-                     document.getElementById('checkoutDispatchRate') ||
-                     document.querySelector('[data-ledger="shipping"]');
+      const knet = document.getElementById('knetDetails');
+      const card = document.getElementById('cardDetails');
+      const cod = document.getElementById('codDetails');
 
-  const grandTotalEl = document.getElementById('checkoutTotal') || 
-                       document.getElementById('summaryTotal') || 
-                       document.getElementById('checkoutGrandTotal') ||
-                       document.querySelector('[data-ledger="total"]');
+      if (knet) knet.style.display = e.target.value === 'knet' ? 'block' : 'none';
+      if (card) card.style.display = e.target.value === 'card' ? 'block' : 'none';
+      if (cod) cod.style.display = e.target.value === 'cod' ? 'block' : 'none';
+    });
+  });
 
-  const btnPayTotal = document.getElementById('btnTotalPayable') || 
-                      document.getElementById('placeOrderTotalAmount') ||
-                      document.querySelector('.place-order-amount');
-
-  const govSelect = document.getElementById('custGov') || 
-                    document.getElementById('governorateSelect') || 
-                    document.querySelector('select[name="governorate"]');
-
-  const freeDeliveryNotice = document.getElementById('freeDeliveryNotice') || 
-                            document.querySelector('.free-delivery-banner span') ||
-                            document.querySelector('.cart-shipping-banner span');
-
-  const checkoutForm = document.getElementById('checkoutForm') || document.querySelector('form');
-  const submitBtn = document.getElementById('placeOrderBtn') || document.querySelector('button[type="submit"]');
-
-  // Fetch Live Catalog
+  // Fetch Live Catalog with Cache-Buster
   let catalog = [];
   async function fetchCatalog() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/products?t=${Date.now()}`, {
         headers: { 'Cache-Control': 'no-cache' }
       });
-      if (!res.ok) throw new Error('API failed');
+      if (!res.ok) throw new Error('API unreachable');
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) return data;
-      throw new Error('Empty');
+      throw new Error('Empty API response');
     } catch {
       try {
         const fallback = await fetch(STATIC_FALLBACK);
@@ -90,8 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Restore saved delivery area if available
   const savedArea = localStorage.getItem('bm_selected_area');
-  if (savedArea && govSelect) {
-    govSelect.value = savedArea;
+  if (savedArea && custGovernorate) {
+    custGovernorate.value = savedArea;
   }
 
   function calculateTotals() {
@@ -103,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         String(p.id).toLowerCase() === String(item.id).toLowerCase() || 
         String(p.sku).toLowerCase() === String(item.id).toLowerCase()
       );
-      
+
       const regularPrice = prod ? Number(prod.price) : (Number(item.price) || 0);
       const onSale = prod && prod.salePrice !== null && prod.salePrice !== undefined && Number(prod.salePrice) > 0 && Number(prod.salePrice) < regularPrice;
       const unit = onSale ? Number(prod.salePrice) : regularPrice;
@@ -113,54 +105,65 @@ document.addEventListener('DOMContentLoaded', async () => {
       totalItemsCount += qty;
     });
 
-    const selectedGov = govSelect ? govSelect.value.toLowerCase() : (savedArea || 'ahmadi');
+    const selectedGov = custGovernorate ? custGovernorate.value.toLowerCase() : (savedArea || 'ahmadi');
     const area = KUWAIT_AREAS.find(a => selectedGov.includes(a.id)) || KUWAIT_AREAS[0];
     const isFree = subtotal >= FREE_SHIPPING_THRESHOLD;
     const deliveryFee = (subtotal === 0 || isFree) ? 0.000 : area.fee;
     const grandTotal = subtotal + deliveryFee;
 
-    // Update Text Fields
-    if (subtotalEl) subtotalEl.textContent = `KD ${subtotal.toFixed(3)}`;
-    if (deliveryEl) {
-      deliveryEl.textContent = isFree ? 'KD 0.000 (FREE)' : `KD ${deliveryFee.toFixed(3)}`;
-      deliveryEl.style.color = isFree ? '#27ae60' : '';
+    // 1. Update Title Count
+    if (summaryItemCount) {
+      summaryItemCount.textContent = totalItemsCount;
     }
-    if (grandTotalEl) grandTotalEl.textContent = `KD ${grandTotal.toFixed(3)}`;
-    if (btnPayTotal) btnPayTotal.textContent = `KD ${grandTotal.toFixed(3)}`;
 
-    // Update order header count
-    const headerTitle = document.querySelector('h3:has(+ div), .order-summary-title, aside h3');
-    document.querySelectorAll('*').forEach(node => {
-      if (node.children.length === 0 && node.textContent.includes('ORDER SUMMARY')) {
-        node.textContent = `ORDER SUMMARY (${totalItemsCount})`;
-      }
-    });
-
-    if (freeDeliveryNotice) {
-      freeDeliveryNotice.textContent = isFree 
-        ? 'Free Delivery Unlocked Across Kuwait 🎉' 
+    // 2. Update Progress Milestone
+    if (tierNoticeText) {
+      tierNoticeText.textContent = isFree
+        ? 'Free Delivery Unlocked Across Kuwait 🎉'
         : `Add KD ${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(3)} for Free Delivery`;
+    }
+
+    if (tierStatusPill) {
+      tierStatusPill.textContent = isFree ? 'FREE ELIGIBLE' : 'DISPATCH FEE';
+      tierStatusPill.style.color = isFree ? '#27ae60' : '#8c8173';
+    }
+
+    if (tierFill) {
+      const pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+      tierFill.style.width = `${pct}%`;
+    }
+
+    // 3. Update Ledger Amounts
+    if (checkoutSubtotal) checkoutSubtotal.textContent = `KD ${subtotal.toFixed(3)}`;
+    if (checkoutDelivery) {
+      checkoutDelivery.textContent = isFree ? 'KD 0.000 (FREE)' : `KD ${deliveryFee.toFixed(3)}`;
+      checkoutDelivery.style.color = isFree ? '#27ae60' : '';
+    }
+    if (checkoutTotal) checkoutTotal.textContent = `KD ${grandTotal.toFixed(3)}`;
+
+    // 4. Update Place Order & Pay Button Price Tag
+    if (btnPayAmount) {
+      btnPayAmount.textContent = `KD ${grandTotal.toFixed(3)}`;
     }
 
     return { subtotal, deliveryFee, grandTotal, totalItemsCount };
   }
 
-  function renderOrderSummary() {
-    calculateTotals();
-
-    if (!summaryContainer) return;
+  function renderOrderItems() {
+    if (!summaryItemsList) return;
 
     if (!cart.length) {
-      summaryContainer.innerHTML = '<p style="color:#8c8173; text-align:center; padding:1.5rem 0;">Your shopping bag is empty.</p>';
+      summaryItemsList.innerHTML = '<p style="color:#8c8173; text-align:center; padding:1.5rem 0; font-size:0.88rem;">Your shopping bag is empty.</p>';
+      calculateTotals();
       return;
     }
 
-    summaryContainer.innerHTML = cart.map(item => {
+    summaryItemsList.innerHTML = cart.map(item => {
       const prod = catalog.find(p => 
         String(p.id).toLowerCase() === String(item.id).toLowerCase() || 
         String(p.sku).toLowerCase() === String(item.id).toLowerCase()
       );
-      
+
       const title = prod ? ((prod.name && typeof prod.name === 'object') ? (prod.name.en || prod.name) : prod.name) : (item.name || item.id);
       const regularPrice = prod ? Number(prod.price) : (Number(item.price) || 0);
       const onSale = prod && prod.salePrice !== null && prod.salePrice !== undefined && Number(prod.salePrice) > 0 && Number(prod.salePrice) < regularPrice;
@@ -170,30 +173,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       const img = prod?.images?.[0] || prod?.image || 'assets/images/placeholder.jpg';
 
       return `
-        <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(214,203,186,0.5);">
-          <img src="${img}" alt="${title}" style="width:50px; height:65px; object-fit:cover; border-radius:6px; border:1px solid rgba(214,203,186,0.6);">
-          <div style="flex:1; min-width:0;">
-            <div style="font-family:'Playfair Display', serif; font-weight:600; font-size:0.9rem; color:#181512; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
-            <div style="font-size:0.75rem; color:#8c8173; margin-top:2px;">${item.size || 'M'} • ${item.color || 'Standard'} (Qty: ${qty})</div>
-            <div style="font-size:0.8rem; font-weight:600; color:#181512; margin-top:2px;">
-              ${onSale ? `<span style="color:#b33939;">KD ${unit.toFixed(3)}</span>` : `KD ${unit.toFixed(3)}`}
+        <div class="summary-item-row" style="display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(214,203,186,0.4);">
+          <img src="${img}" alt="${title}" style="width: 48px; height: 64px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(214,203,186,0.6);">
+          <div style="flex: 1; min-width: 0;">
+            <h4 style="margin: 0 0 2px; font-family: 'Playfair Display', serif; font-size: 0.88rem; color: #181512; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</h4>
+            <div style="font-size: 0.74rem; color: #8c8173; margin-bottom: 2px;">${item.size || 'M'} • ${item.color || 'Standard'} (Qty: ${qty})</div>
+            <div style="font-size: 0.8rem; font-weight: 600; color: #181512;">
+              ${onSale ? `<span style="color: #b33939;">KD ${unit.toFixed(3)}</span>` : `KD ${unit.toFixed(3)}`}
             </div>
           </div>
-          <div style="font-weight:700; font-size:0.9rem; color:#181512;">KD ${lineTotal.toFixed(3)}</div>
+          <div style="font-weight: 700; font-size: 0.88rem; color: #181512;">KD ${lineTotal.toFixed(3)}</div>
         </div>
       `;
     }).join('');
+
+    calculateTotals();
   }
 
-  govSelect?.addEventListener('change', () => {
-    localStorage.setItem('bm_selected_area', govSelect.value);
+  // Handle Governorate Dropdown Changes
+  custGovernorate?.addEventListener('change', () => {
+    localStorage.setItem('bm_selected_area', custGovernorate.value);
     calculateTotals();
   });
 
-  renderOrderSummary();
+  renderOrderItems();
 
-  // Handle Form Submission
-  checkoutForm?.addEventListener('submit', async (e) => {
+  // Master Order Placement Event Handler
+  placeOrderBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
 
     if (!cart.length) {
@@ -201,45 +207,60 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const firstName = document.getElementById('firstName')?.value.trim() || document.querySelector('input[name="firstName"]')?.value.trim() || '';
-    const lastName = document.getElementById('lastName')?.value.trim() || document.querySelector('input[name="lastName"]')?.value.trim() || '';
-    const rawName = document.getElementById('custName')?.value.trim() || document.querySelector('input[name="name"]')?.value.trim() || '';
-    const fullName = rawName || `${firstName} ${lastName}`.trim();
+    const firstName = document.getElementById('custFirstName')?.value.trim();
+    const lastName = document.getElementById('custLastName')?.value.trim();
+    const phone = document.getElementById('custPhone')?.value.trim();
+    const area = document.getElementById('custArea')?.value.trim();
+    const block = document.getElementById('custBlock')?.value.trim();
+    const street = document.getElementById('custStreet')?.value.trim();
+    const house = document.getElementById('custHouse')?.value.trim();
+    const avenue = document.getElementById('custAvenue')?.value.trim() || '';
+    const flat = document.getElementById('custFlat')?.value.trim() || '';
+    const notes = document.getElementById('custNotes')?.value.trim() || '';
+    const govOption = custGovernorate?.options[custGovernorate.selectedIndex]?.text || 'Al Ahmadi';
 
-    const phone = document.getElementById('custPhone')?.value.trim() || 
-                  document.getElementById('mobileNumber')?.value.trim() || 
-                  document.querySelector('input[name="phone"]')?.value.trim() || 
-                  document.querySelector('input[type="tel"]')?.value.trim();
-
-    const governorate = govSelect ? govSelect.value : 'Al Ahmadi';
-    const address = document.getElementById('custAddress')?.value.trim() || 
-                    document.getElementById('streetAddress')?.value.trim() || 
-                    document.querySelector('textarea[name="address"]')?.value.trim() || 
-                    document.querySelector('textarea')?.value.trim();
-
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'K-Net Local Debit';
-
-    if (!fullName || !phone) {
-      alert('Please fill in your contact name and mobile number.');
+    if (!firstName || !lastName) {
+      alert('Please enter your First and Last Name.');
+      document.getElementById('custFirstName')?.focus();
       return;
     }
+
+    if (!phone || phone.length < 8) {
+      alert('Please enter a valid 8-digit Kuwait Mobile Number.');
+      document.getElementById('custPhone')?.focus();
+      return;
+    }
+
+    if (!area || !block || !street || !house) {
+      alert('Please fill in your Delivery Address details (Area, Block, Street, House/Building).');
+      return;
+    }
+
+    const fullAddress = `Gov: ${govOption}, Area: ${area}, Block: ${block}, Street: ${street}${avenue ? ', Ave: ' + avenue : ''}, House: ${house}${flat ? ', Flat: ' + flat : ''}${notes ? ' (Notes: ' + notes + ')' : ''}`;
+
+    const payMethodRadio = document.querySelector('input[name="payMethod"]:checked');
+    const paymentMethod = payMethodRadio ? payMethodRadio.value.toUpperCase() : 'KNET';
 
     const { subtotal, deliveryFee, grandTotal } = calculateTotals();
 
     const payload = {
-      recipient: { name: fullName, phone, governorate, address: address || governorate },
+      recipient: {
+        name: `${firstName} ${lastName}`,
+        phone: phone,
+        governorate: govOption,
+        address: fullAddress
+      },
       items: cart,
       paymentMethod,
-      deliveryArea: governorate,
+      deliveryArea: govOption,
       subtotal,
       deliveryFee,
       total: grandTotal
     };
 
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Processing Dispatch...';
-    }
+    placeOrderBtn.disabled = true;
+    const originalText = placeOrderBtn.innerHTML;
+    placeOrderBtn.innerHTML = `<span>Processing Order...</span><span>KD ${grandTotal.toFixed(3)}</span>`;
 
     try {
       const res = await fetch(`${API_BASE}/api/orders`, {
@@ -257,18 +278,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.location.href = `track-order.html?id=${data.order.orderId}`;
       } else {
-        alert(data.error || 'Failed to place order. Please try again.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Place Order & Pay';
-        }
+        alert(data.error || 'Failed to place order. Please check your network connection.');
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = originalText;
       }
     } catch {
       alert('Network error connecting to dispatch server.');
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Place Order & Pay';
-      }
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.innerHTML = originalText;
     }
   });
 });
