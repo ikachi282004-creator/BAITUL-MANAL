@@ -1,115 +1,348 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile & Purchases — BAITUL MANAL Kuwait</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Sanctuary | BAITUL MANAL Kuwait</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/variables.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
   <style>
     :root {
-      --bm-gold: #c5a880;
-      --bm-gold-dark: #9e825a;
-      --bm-dark: #181512;
-      --bm-card-bg: #fff;
-      --bm-border: #d6cbba;
+      --gold: #c5a880;
+      --gold-dark: #9e825a;
+      --dark: #181512;
+      --card-bg: #ffffff;
+      --border: #e8e2d8;
+      --success: #27ae60;
+      --danger: #c0392b;
     }
-
     body {
-      background-color: #fbf9f6;
-      color: var(--bm-dark);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #faf8f5;
+      font-family: 'Outfit', sans-serif;
+      color: var(--dark);
       margin: 0;
       padding: 0;
     }
-
-    .container {
-      max-width: 800px;
-      margin: 60px auto;
-      padding: 0 20px;
-    }
-
-    .profile-card {
-      background: var(--bm-card-bg);
-      border: 1px solid var(--bm-border);
-      border-radius: 10px;
-      padding: 32px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-    }
-
-    .title {
-      font-family: 'Playfair Display', Georgia, serif;
-      font-size: 2rem;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .subtitle {
-      color: #8c8173;
-      text-align: center;
-      margin-bottom: 28px;
-      font-size: 0.95rem;
-    }
-
-    .phone-sync-box {
+    .profile-nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
       display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .profile-nav .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--dark);
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .profile-container {
+      max-width: 900px;
+      margin: 30px auto 60px;
+      padding: 0 16px;
     }
 
-    .input-field {
+    /* Auth Gates */
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 28px;
+      max-width: 440px;
+      margin: 40px auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    }
+    .auth-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .auth-tab-btn {
       flex: 1;
-      padding: 12px 16px;
-      border: 1px solid var(--bm-border);
+      padding: 10px;
+      text-align: center;
+      background: none;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #8c8173;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .auth-tab-btn.active {
+      color: var(--dark);
+      border-bottom: 2px solid var(--gold);
+    }
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5a5146;
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
       border-radius: 6px;
-      font-size: 1rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      box-sizing: border-box;
       outline: none;
     }
-
-    .btn-sync {
-      background: var(--bm-gold);
-      color: #000;
+    .form-control:focus {
+      border-color: var(--gold);
+    }
+    .btn-auth {
+      width: 100%;
+      background: var(--dark);
+      color: #fff;
+      padding: 14px;
       border: none;
-      padding: 12px 24px;
       border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-auth:hover {
+      background: #332d27;
+    }
+    .auth-msg {
+      font-size: 0.82rem;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .user-greeting h2 {
+      margin: 0 0 4px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+    }
+    .user-greeting p {
+      margin: 0;
+      color: #8c8173;
+      font-size: 0.9rem;
+    }
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #5a5146;
+    }
+
+    /* Orders Section */
+    .order-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+      transition: border-color 0.2s;
+    }
+    .order-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f2ede4;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .order-pill {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .order-items-summary {
+      margin-bottom: 14px;
+    }
+    .order-item-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      padding: 6px 0;
+      color: #332d27;
+    }
+    .order-card-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f2ede4;
+      padding-top: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-cancel-order {
+      background: #fff;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
     }
-
-    .nav-links {
-      margin-top: 30px;
-      text-align: center;
+    .btn-cancel-order:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-track-order {
+      background: var(--dark);
+      color: #fff;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
     }
 
-    .nav-links a {
-      color: var(--bm-gold-dark);
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin: 0 10px;
-      font-weight: 600;
+    @media (max-width: 600px) {
+      .auth-card {
+        padding: 24px 16px;
+      }
+      .dashboard-header {
+        padding: 18px 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="profile-card">
-      <h1 class="title">Customer Atelier Profile</h1>
-      <p class="subtitle">Access your dispatch history and couture acquisitions across Kuwait</p>
 
-      <div class="phone-sync-box">
-        <input type="tel" id="profilePhoneInput" class="input-field" placeholder="Enter Mobile Number (e.g. 96560454629)">
-        <button type="button" id="fetchProfileOrdersBtn" class="btn-sync">Load Orders</button>
+  <header class="profile-nav">
+    <a href="index.html" class="logo">BAITUL MANAL</a>
+    <a href="shop.html" style="color: var(--dark); text-decoration: none; font-size: 0.88rem; font-weight: 600;">← Boutique Catalog</a>
+  </header>
+
+  <main class="profile-container">
+
+    <!-- AUTH GATE: LOGIN / SIGNUP / FORGOT -->
+    <div id="authGate" class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabLogin">Log In</button>
+        <button type="button" class="auth-tab-btn" id="tabRegister">Sign Up</button>
       </div>
 
-      <div id="profileOrdersList">
-        <p style="text-align:center; color:#8c8173; padding: 2rem 0;">Enter your mobile number above to retrieve order records.</p>
-      </div>
+      <!-- Log In Form -->
+      <form id="formLogin">
+        <div class="form-group">
+          <label>Kuwait Phone Number</label>
+          <input type="tel" id="loginPhone" class="form-control" placeholder="e.g. 96560454629 or 60454629" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+        </div>
+        <div style="text-align: right; margin-bottom: 12px;">
+          <a href="#" id="linkForgot" style="font-size: 0.78rem; color: #8c8173; text-decoration: underline;">Forgot Password?</a>
+        </div>
+        <button type="submit" class="btn-auth">Access Sanctuary</button>
+        <div class="auth-msg" id="loginMsg"></div>
+      </form>
 
-      <div class="nav-links">
-        <a href="index.html">← Return to Boutique</a>
-        <a href="track-order.html">Track Single Dispatch</a>
-      </div>
+      <!-- Register Form -->
+      <form id="formRegister" style="display: none;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="regName" class="form-control" placeholder="e.g. Fatima Al-Sabah" required>
+        </div>
+        <div class="form-group">
+          <label>Kuwait Mobile Number</label>
+          <input type="tel" id="regPhone" class="form-control" placeholder="e.g. 60454629" required>
+        </div>
+        <div class="form-group">
+          <label>Email (Optional)</label>
+          <input type="email" id="regEmail" class="form-control" placeholder="yourname@domain.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" class="form-control" placeholder="Create Password" required>
+        </div>
+        <button type="submit" class="btn-auth">Create Atelier Profile</button>
+        <div class="auth-msg" id="regMsg"></div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form id="formForgot" style="display: none;">
+        <p style="font-size: 0.85rem; color: #5a5146; margin: 0 0 16px;">Enter your registered Kuwait mobile number to reset your password.</p>
+        <div class="form-group">
+          <label>Registered Phone Number</label>
+          <input type="tel" id="forgotPhone" class="form-control" placeholder="e.g. 60454629" required>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="forgotNewPass" class="form-control" placeholder="Enter New Password" required>
+        </div>
+        <button type="submit" class="btn-auth">Update Password</button>
+        <div style="text-align: center; margin-top: 12px;">
+          <a href="#" id="linkBackLogin" style="font-size: 0.78rem; color: #8c8173;">← Back to Log In</a>
+        </div>
+        <div class="auth-msg" id="forgotMsg"></div>
+      </form>
     </div>
-  </div>
+
+    <!-- PROFILE DASHBOARD -->
+    <div id="profileDashboard" style="display: none;">
+      
+      <!-- Greeting Header -->
+      <div class="dashboard-header">
+        <div class="user-greeting">
+          <h2>Salam, <span id="dashCustomerName">Guest</span></h2>
+          <p>Linked Phone: 🇰🇼 <strong id="dashCustomerPhone">...</strong></p>
+        </div>
+        <button type="button" class="btn-logout" id="profileLogoutBtn">Sign Out</button>
+      </div>
+
+      <!-- Dispatches Section -->
+      <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 1.3rem;">Your Orders & Dispatches</h3>
+        <button type="button" id="refreshCustomerOrdersBtn" style="background: none; border: none; font-size: 0.85rem; color: var(--gold-dark); cursor: pointer; font-weight: 600;">↻ Refresh Dispatches</button>
+      </div>
+
+      <!-- Orders Feed -->
+      <div id="customerOrdersContainer">
+        <p style="text-align:center; color:#8c8173; padding: 2rem 0;">Synchronizing your orders...</p>
+      </div>
+
+    </div>
+
+  </main>
 
   <script src="assets/js/profile.js"></script>
 </body>

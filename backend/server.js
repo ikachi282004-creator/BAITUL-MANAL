@@ -120,6 +120,97 @@ app.get('/api/health', (req, res) => {
 });
 
 // -------------------------------------------------------------
+// Customer Authentication & Profile Management Endpoints
+// -------------------------------------------------------------
+
+// Customer Registration
+app.post('/api/customer/register', (req, res) => {
+  const { fullName, phone, email, password } = req.body;
+  if (!fullName || !phone || !password) {
+    return res.status(400).json({ error: 'Name, Kuwait Phone, and Password are required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  const sql = `INSERT INTO customers (full_name, phone, email, password_hash) VALUES (?, ?, ?, ?)`;
+
+  db.run(sql, [fullName, cleanPhone, email || '', password], function (err) {
+    if (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(409).json({ error: 'This phone number is already registered. Please log in.' });
+      }
+      return res.status(500).json({ error: 'Failed to create customer account.' });
+    }
+    res.status(201).json({
+      success: true,
+      user: { fullName, phone: cleanPhone, email: email || '' }
+    });
+  });
+});
+
+// Customer Login
+app.post('/api/customer/login', (req, res) => {
+  const { phone, password } = req.body;
+  if (!phone || !password) {
+    return res.status(400).json({ error: 'Phone and Password are required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  db.get(`SELECT * FROM customers WHERE phone = ?`, [cleanPhone], (err, user) => {
+    if (err || !user) {
+      return res.status(404).json({ error: 'No account registered with this phone number.' });
+    }
+    if (user.password_hash !== password) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+    res.json({
+      success: true,
+      user: { fullName: user.full_name, phone: user.phone, email: user.email }
+    });
+  });
+});
+
+// Customer Password Reset
+app.post('/api/customer/reset-password', (req, res) => {
+  const { phone, newPassword } = req.body;
+  if (!phone || !newPassword) {
+    return res.status(400).json({ error: 'Phone and new password are required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  db.run(`UPDATE customers SET password_hash = ? WHERE phone = ?`, [newPassword, cleanPhone], function (err) {
+    if (err || this.changes === 0) {
+      return res.status(404).json({ error: 'Phone number not found in our customer records.' });
+    }
+    res.json({ success: true, message: 'Password updated successfully. Please log in.' });
+  });
+});
+
+// Customer Self-Service Order Cancellation
+app.post('/api/customer/cancel-order', (req, res) => {
+  const { orderId, phone } = req.body;
+  if (!orderId || !phone) {
+    return res.status(400).json({ error: 'Order reference and phone number required.' });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  db.get(`SELECT * FROM orders WHERE order_id = ? AND customer_phone = ?`, [orderId, cleanPhone], (err, row) => {
+    if (err || !row) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    if (row.fulfillment_status !== 'PENDING_DISPATCH') {
+      return res.status(400).json({
+        error: 'Order has already entered tailoring or courier delivery and cannot be self-cancelled. Please contact our WhatsApp concierge.'
+      });
+    }
+
+    db.run(`UPDATE orders SET fulfillment_status = 'CANCELLED' WHERE order_id = ?`, [orderId], (err2) => {
+      if (err2) return res.status(500).json({ error: 'Failed to cancel order.' });
+      res.json({ success: true, message: `Order #${orderId} has been successfully cancelled.` });
+    });
+  });
+});
+
+// -------------------------------------------------------------
 // Order Management, Dispatch, Tracking & Profile Endpoints
 // -------------------------------------------------------------
 
@@ -341,6 +432,21 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
 // Initialize Database and Start Server
 // -------------------------------------------------------------
 const startServer = () => {
+  // Ensure customers table exists
+  db.run(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      phone TEXT UNIQUE NOT NULL,
+      full_name TEXT NOT NULL,
+      email TEXT,
+      password_hash TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('Error creating customers table:', err.message);
+    else console.log('🛡️ Customers authentication table verified.');
+  });
+
   app.listen(PORT, () => {
     console.log(`🚀 Server listening at http://localhost:${PORT}`);
     console.log(`📁 Resolved catalog path: ${catalogPath}`);
