@@ -3,61 +3,264 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Baitul Manal — Operations & Catalog Control</title>
-  <link rel="stylesheet" href="assets/css/base.css">
-  <link rel="stylesheet" href="assets/css/components.css">
+  <title>Baitul Manal — Operations & Visual Catalog Studio</title>
   <style>
-    :root { --bm-gold: #c5a880; --bm-dark: #121212; --bm-card: #1e1e1e; }
-    body { background: var(--bm-dark); color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 25px; }
-    .btn { background: var(--bm-gold); color: #000; border: none; padding: 10px 18px; border-radius: 4px; font-weight: 600; cursor: pointer; }
-    .btn-danger { background: #b33939; color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--bm-gold); color: var(--bm-gold); }
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { background: #2a2a2a; color: #aaa; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 500; }
-    .tab-btn.active { background: var(--bm-gold); color: #000; font-weight: 700; }
-    .card { background: var(--bm-card); border-radius: 8px; padding: 20px; border: 1px solid #333; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 15px; font-size: 0.9rem; }
-    th, td { padding: 12px; border-bottom: 1px solid #2e2e2e; }
-    th { color: var(--bm-gold); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
-    input, textarea, select { background: #121212; border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 4px; width: 100%; box-sizing: border-box; }
-    .raw-editor { width: 100%; height: 500px; font-family: monospace; font-size: 13px; background: #0a0a0a; color: #62d6e8; border: 1px solid #333; padding: 15px; border-radius: 6px; }
-    .gate-box { max-width: 400px; margin: 100px auto; text-align: center; }
+    :root {
+      --bm-gold: #c5a880;
+      --bm-gold-dark: #9e825a;
+      --bm-dark: #0f0f11;
+      --bm-card: #18181c;
+      --bm-border: #2a2a30;
+      --bm-red: #e74c3c;
+      --bm-green: #2ecc71;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bm-dark);
+      color: #eaeaea;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* Top Bar */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--bm-border);
+      margin-bottom: 24px;
+    }
+    .header h1 { color: var(--bm-gold); font-size: 1.6rem; letter-spacing: 1px; }
+
+    /* Buttons */
+    .btn {
+      background: var(--bm-gold);
+      color: #000;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #d8be97; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--bm-gold);
+      color: var(--bm-gold);
+    }
+    .btn-outline:hover { background: rgba(197, 168, 128, 0.1); }
+    .btn-danger { background: var(--bm-red); color: #fff; }
+    .btn-danger:hover { background: #c0392b; }
+
+    /* Gate / Login Card */
+    .gate-box {
+      max-width: 420px;
+      margin: 100px auto;
+      background: var(--bm-card);
+      border: 1px solid var(--bm-border);
+      border-radius: 10px;
+      padding: 36px 28px;
+      text-align: center;
+    }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .tab-btn {
+      background: #202026;
+      color: #999;
+      border: 1px solid var(--bm-border);
+      padding: 10px 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .tab-btn.active {
+      background: var(--bm-gold);
+      color: #000;
+      border-color: var(--bm-gold);
+      font-weight: 700;
+    }
+
+    /* Grid Layout for Inventory Items */
+    .inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+      margin-top: 18px;
+    }
+
+    .product-editor-card {
+      background: var(--bm-card);
+      border: 1px solid var(--bm-border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .preview-header {
+      position: relative;
+      height: 240px;
+      background: #111;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-header img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .badge-preview-sale {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--bm-gold);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-preview-cat {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: 1px solid #444;
+    }
+
+    .card-fields {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+    .field-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 0.75rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, select, textarea {
+      background: #0f0f11;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #fff;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--bm-gold);
+    }
+    textarea { resize: vertical; min-height: 55px; }
+
+    .card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #141417;
+      border-top: 1px solid var(--bm-border);
+      margin-top: auto;
+    }
+
+    /* Orders View */
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--bm-border); text-align: left; }
+    th { color: var(--bm-gold); font-size: 0.75rem; text-transform: uppercase; }
+
+    /* Raw JSON Editor */
+    .raw-editor {
+      width: 100%;
+      height: 550px;
+      font-family: monospace;
+      background: #0b0b0d;
+      color: #62d6e8;
+      border: 1px solid var(--bm-border);
+      padding: 16px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
 
     <!-- PASSWORD GATE -->
-    <div id="gateCard" class="card gate-box">
-      <h2 style="color:var(--bm-gold);">Baitul Manal Admin</h2>
-      <p style="color:#888; font-size: 0.85rem;">Enter your confidential administrator password</p>
-      <input type="password" id="adminPassword" placeholder="Enter Password" style="margin: 15px 0;">
-      <button class="btn" style="width: 100%;" id="loginBtn">Unlock Terminal</button>
-      <div id="gateError" style="color: #ff5252; margin-top: 10px; font-size: 0.85rem;"></div>
+    <div id="gateCard" class="gate-box">
+      <h2 style="color:var(--bm-gold); margin-bottom: 8px;">BAITUL MANAL</h2>
+      <p style="color:#888; font-size: 0.85rem; margin-bottom: 20px;">Managerial Catalog & Dispatch Portal</p>
+      <input type="password" id="adminPassword" placeholder="Enter Secure Password" style="margin-bottom: 16px;">
+      <button class="btn" style="width:100%; padding: 12px;" id="loginBtn">Unlock Studio</button>
+      <div id="gateError" style="color:var(--bm-red); margin-top: 12px; font-size: 0.85rem;"></div>
     </div>
 
     <!-- MAIN DASHBOARD -->
     <div id="dashboardView" style="display: none;">
       <div class="header">
         <div>
-          <h2 style="margin:0; color:var(--bm-gold);">BAITUL MANAL — Operations Hub</h2>
-          <small style="color:#888;">Live Catalog, Realtime Dispatches & Stock Control</small>
+          <h1>BAITUL MANAL — Studio Control</h1>
+          <small style="color:#888;">Live Visual Inventory & Dispatch Console</small>
         </div>
-        <button class="btn-outline" id="logoutBtn">Lock Console</button>
+        <button class="btn-outline" id="logoutBtn">Lock Terminal</button>
       </div>
 
+      <!-- TABS -->
       <div class="tabs">
-        <button class="tab-btn active" data-tab="orders">Customer Orders</button>
-        <button class="tab-btn" data-tab="inventory">Live Inventory Grid</button>
-        <button class="tab-btn" data-tab="raw-json">Direct JSON File Editor</button>
+        <button class="tab-btn active" data-tab="inventory">Live Catalog Grid</button>
+        <button class="tab-btn" data-tab="orders">Customer Dispatches</button>
+        <button class="tab-btn" data-tab="raw-json">Raw products.json</button>
       </div>
 
-      <!-- PANE 1: ORDERS -->
-      <div id="paneOrders" class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3>Customer Dispatches</h3>
+      <!-- INVENTORY TAB -->
+      <div id="paneInventory">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <h2 style="font-size: 1.2rem;">Visual Catalog Editor</h2>
+            <span style="color:#888; font-size:0.85rem;">Modify image links, sale tags, prices, or descriptions below.</span>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-outline" id="addNewProductBtn">+ Add New Dress</button>
+            <button class="btn" id="saveAllInventoryBtn">💾 Save All Changes Live</button>
+          </div>
+        </div>
+
+        <div class="inventory-grid" id="inventoryGridContainer">
+          <!-- Live cards rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- ORDERS TAB -->
+      <div id="paneOrders" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>Dispatches & Invoices</h2>
           <button class="btn-outline" id="refreshOrdersBtn">↻ Refresh</button>
         </div>
         <table>
@@ -65,52 +268,24 @@
             <tr>
               <th>Order ID</th>
               <th>Customer</th>
-              <th>Destination</th>
+              <th>Area / Address</th>
               <th>Payment</th>
               <th>Total</th>
               <th>Status</th>
-              <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="ordersTableBody">
-            <tr><td colspan="7" style="text-align:center;">Loading orders...</td></tr>
-          </tbody>
+          <tbody id="ordersTableBody"></tbody>
         </table>
       </div>
 
-      <!-- PANE 2: INVENTORY TABLE -->
-      <div id="paneInventory" class="card" style="display: none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3>Inventory Management</h3>
-          <button class="btn" id="saveInlineChangesBtn">Save Inventory Updates</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>SKU / ID</th>
-              <th>Title (EN)</th>
-              <th>Category</th>
-              <th>Price (KD)</th>
-              <th>Sale Price (KD)</th>
-              <th>Sizes</th>
-              <th>Delete</th>
-            </tr>
-          </thead>
-          <tbody id="inventoryTableBody"></tbody>
-        </table>
-      </div>
-
-      <!-- PANE 3: RAW JSON EDITOR -->
-      <div id="paneRawJson" class="card" style="display: none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-          <div>
-            <h3 style="margin:0;">Direct Catalog File Editor (`products.json`)</h3>
-            <small style="color:#888;">Directly edit any property without opening VS Code.</small>
-          </div>
-          <button class="btn" id="saveRawJsonBtn">💾 Save JSON Live to Server</button>
+      <!-- RAW JSON TAB -->
+      <div id="paneRawJson" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2>Direct JSON Editor</h2>
+          <button class="btn" id="saveRawJsonBtn">💾 Overwrite products.json</button>
         </div>
         <textarea id="rawJsonTextarea" class="raw-editor" spellcheck="false"></textarea>
-        <div id="jsonStatus" style="margin-top:8px; font-weight: bold;"></div>
+        <div id="jsonStatus" style="margin-top: 8px;"></div>
       </div>
 
     </div>
