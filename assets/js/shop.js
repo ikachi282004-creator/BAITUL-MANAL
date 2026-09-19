@@ -1,11 +1,18 @@
 /**
  * BAITUL MANAL — Master Shop Catalog Controller (shop.js)
- * Fully mapped to shop.html markup
+ * Fully mapped to shop.html markup with Dynamic API Sync & Static Fallback
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
   let allProducts = [];
   let filteredProducts = [];
+
+  // Backend API URL mapping
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://baitul-manal.onrender.com'; // Adjust if your Render Web Service name differs
+
+  const STATIC_FALLBACK = 'assets/data/products.json';
 
   const state = {
     category: 'all',
@@ -62,14 +69,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('bm_wishlist_updated', refreshBadges);
 
   // =========================================================================
-  // 2. FETCH CATALOG & INITIALIZE
+  // 2. FETCH CATALOG (NETWORK-FIRST WITH STATIC FALLBACK) & INITIALIZE
   // =========================================================================
-  try {
-    const res = await fetch('assets/data/products.json');
-    if (!res.ok) throw new Error('Could not fetch products.json');
-    allProducts = await res.json();
+  async function fetchLiveCatalog() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout for sleepy cold starts
 
-    // Parse URL parameter (?category=women, ?category=girls, etc.)
+    try {
+      // 1. Attempt to fetch live products directly from backend
+      const res = await fetch(`${API_BASE}/api/admin/products`, {
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' }
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`API status ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        console.log(`[Catalog] Synced ${data.length} live items from Render backend.`);
+        return data;
+      }
+      throw new Error('API returned empty catalog payload');
+    } catch (apiErr) {
+      console.warn('[Catalog] Backend unreachable or booting up. Loading local fallback...', apiErr.message);
+      
+      // 2. Fallback to bundled static JSON file
+      const localRes = await fetch(STATIC_FALLBACK);
+      if (!localRes.ok) throw new Error('Local fallback products.json missing');
+      const localData = await localRes.json();
+      console.log(`[Catalog] Loaded ${localData.length} items from local static archive.`);
+      return localData;
+    }
+  }
+
+  try {
+    allProducts = await fetchLiveCatalog();
+
+    // Parse URL parameters (?category=women, ?category=girls, etc.)
     const urlParams = new URLSearchParams(window.location.search);
     const cat = urlParams.get('category');
     const search = urlParams.get('search') || urlParams.get('q');
@@ -127,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Live Search Query Match
       if (state.searchQuery) {
-        const titleEn = (p.name?.en || '').toLowerCase();
+        const titleEn = (p.name?.en || (typeof p.name === 'string' ? p.name : '')).toLowerCase();
         const titleAr = (p.name?.ar || '').toLowerCase();
         const sku = (p.sku || p.id || '').toLowerCase();
         const q = state.searchQuery.toLowerCase();
@@ -201,9 +237,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     catalogGrid.innerHTML = filteredProducts.map(p => {
       const isFav = wishlist.includes(p.id);
       const title = (p.name && typeof p.name === 'object') ? (p.name[lang] || p.name.en) : p.name;
-      const onSale = p.salePrice !== null && p.salePrice < p.price;
+      const onSale = p.salePrice !== null && p.salePrice !== undefined && Number(p.salePrice) < Number(p.price);
       const discount = onSale ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
-      const mainImg = p.images?.[0] || 'assets/images/placeholder.jpg';
+      const mainImg = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
       const altImg = p.images?.[1] || mainImg;
 
       return `
@@ -237,9 +273,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <h3 class="arrival-card__title"><a href="product.html?id=${p.id}">${title}</a></h3>
             <div class="arrival-card__pricing">
               ${onSale
-                ? `<span class="price-curr price-curr--discount">KD ${p.salePrice.toFixed(3)}</span>
-                   <span class="price-orig">KD ${p.price.toFixed(3)}</span>`
-                : `<span class="price-curr">KD ${p.price.toFixed(3)}</span>`
+                ? `<span class="price-curr price-curr--discount">KD ${Number(p.salePrice).toFixed(3)}</span>
+                   <span class="price-orig">KD ${Number(p.price).toFixed(3)}</span>`
+                : `<span class="price-curr">KD ${Number(p.price).toFixed(3)}</span>`
               }
             </div>
           </div>
@@ -261,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.stopPropagation();
         const id = btn.dataset.id;
         const size = btn.dataset.size;
-        const prod = allProducts.find(p => p.id === id);
+        const prod = allProducts.find(p => String(p.id) === String(id) || String(p.sku) === String(id));
         const color = prod?.colors?.[0]?.name || 'Standard';
 
         let cart = [];
@@ -348,8 +384,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         state.category = (btn.dataset.cat || 'all').toLowerCase();
         syncActiveCategoryUI();
         runFiltering();
-
-        // Close mobile drawer if open
         closeMobileDrawer();
       });
     });
@@ -427,17 +461,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function syncActiveCategoryUI() {
-    // Sync Top Pills
     document.querySelectorAll('.cat-pill').forEach(pill => {
       pill.classList.toggle('active', pill.dataset.cat.toLowerCase() === state.category);
     });
 
-    // Sync Sidebar Buttons
     document.querySelectorAll('.sidebar-dept-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.cat.toLowerCase() === state.category);
     });
 
-    // Sync Page Title Headline
     if (shopTitle) {
       const titles = {
         all: 'All Collections',
