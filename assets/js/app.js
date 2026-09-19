@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <!-- Unified Luxury Quick Add Action Bar -->
+            <!-- Quick Add Action Bar -->
             <div class="arrival-card__quick-bar">
               <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <!-- Unified Luxury Quick Add Action Bar -->
+            <!-- Quick Add Action Bar -->
             <div class="arrival-card__quick-bar">
               <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -522,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.qa-open-btn').forEach(btn => {
       btn.onclick = (e) => {
         const id = e.currentTarget.dataset.id;
-        const prod = productCache.find(p => p.id === id);
+        const prod = productCache.find(p => String(p.id) === String(id) || String(p.sku) === String(id));
         if (prod) openQuickAdd(prod);
       };
     });
@@ -628,10 +628,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (container) {
       container.innerHTML = cart.map((item, idx) => {
-        const prod = productCache.find(p => p.id === item.id);
-        const title = prod ? ((prod.name && typeof prod.name === 'object') ? (prod.name[currentLang] || prod.name.en) : prod.name) : item.id;
+        const prod = productCache.find(p => String(p.id) === String(item.id) || String(p.sku) === String(item.id));
+        const title = prod ? ((prod.name && typeof prod.name === 'object') ? (prod.name[currentLang] || prod.name.en) : prod.name) : (item.name || item.id);
         const img = prod?.images?.[0] || prod?.image || 'assets/images/placeholder.jpg';
-        const unitPrice = prod ? (prod.salePrice || prod.price) : (item.price || 0);
+        const regularPrice = prod ? Number(prod.price) : (Number(item.price) || 0);
+        const onSale = prod && prod.salePrice !== null && prod.salePrice !== undefined && Number(prod.salePrice) > 0 && Number(prod.salePrice) < regularPrice;
+        const unitPrice = onSale ? Number(prod.salePrice) : regularPrice;
         const qty = parseInt(item.qty, 10) || 1;
         const linePrice = unitPrice * qty;
         subtotal += linePrice;
@@ -743,7 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const waBtn = document.getElementById('drawerWhatsAppBtn');
     if (waBtn) {
       const summary = cart.map(item => {
-        const p = productCache.find(prod => prod.id === item.id);
+        const p = productCache.find(prod => String(prod.id) === String(item.id) || String(prod.sku) === String(item.id));
         const nameEn = p ? (p.name?.en || p.name) : item.id;
         return `• ${nameEn} (Size: ${item.size}) x${item.qty}`;
       }).join('\n');
@@ -757,10 +759,11 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // =========================================================================
-  // 13. QUICK ADD MODAL ENGINE
+  // 13. QUICK ADD CONFIRMATION MODAL ENGINE (WITH CONFIRM BUTTON)
   // =========================================================================
   const qaOverlay = document.getElementById('quickAddOverlay');
   const qaClose = document.getElementById('quickAddClose');
+  const qaCancelBtn = document.getElementById('qaCancelBtn');
   const qaSubmit = document.getElementById('qaSubmitBtn');
   let selectedQAProduct = null;
   let selectedSize = null;
@@ -770,7 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function openQuickAdd(product) {
     selectedQAProduct = product;
     selectedSize = (product.sizes && product.sizes.length) ? product.sizes[0] : 'Standard';
-    selectedColor = product.colors?.[0]?.name || 'Default';
+    selectedColor = product.colors?.[0]?.name || 'Standard';
     qaQuantity = 1;
 
     const currentLang = document.documentElement.getAttribute('lang') || 'en';
@@ -781,12 +784,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (qaImg) qaImg.src = product.images?.[0] || product.image || 'assets/images/placeholder.jpg';
     if (qaTitle) qaTitle.textContent = (product.name && typeof product.name === 'object') ? (product.name[currentLang] || product.name.en) : product.name;
 
+    const regularPrice = Number(product.price) || 0;
+    const onSale = product.salePrice !== null && product.salePrice !== undefined && Number(product.salePrice) > 0 && Number(product.salePrice) < regularPrice;
+    const activePrice = onSale ? Number(product.salePrice) : regularPrice;
+
     if (qaPricing) {
-      qaPricing.innerHTML = product.salePrice
-        ? `<span class="price-curr price-curr--discount">KD ${Number(product.salePrice).toFixed(3)}</span> <span class="price-orig">KD ${Number(product.price).toFixed(3)}</span>`
-        : `<span class="price-curr">KD ${Number(product.price).toFixed(3)}</span>`;
+      qaPricing.innerHTML = onSale
+        ? `<span class="price-curr price-curr--discount">KD ${activePrice.toFixed(3)}</span> <del class="price-orig" style="color: #8c8173; font-size: 0.8rem; margin-left: 4px;">KD ${regularPrice.toFixed(3)}</del>`
+        : `<span class="price-curr">KD ${activePrice.toFixed(3)}</span>`;
     }
 
+    // Populate Size Buttons
     const sizesBox = document.getElementById('qaSizes');
     if (sizesBox) {
       const sizes = (product.sizes && product.sizes.length) ? product.sizes : ['Standard'];
@@ -803,9 +811,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Populate Color Swatches
     const colorsBox = document.getElementById('qaColors');
     if (colorsBox) {
-      colorsBox.innerHTML = (product.colors || []).map((c, idx) => `
+      const colors = (product.colors && product.colors.length) ? product.colors : [{ name: 'Standard', hex: '#181512' }];
+      colorsBox.innerHTML = colors.map((c, idx) => `
         <button type="button" class="qa-color-btn ${idx === 0 ? 'selected' : ''}" data-color="${c.name}" style="background: ${c.hex};" title="${c.name}"></button>
       `).join('');
 
@@ -823,7 +833,16 @@ document.addEventListener('DOMContentLoaded', () => {
     qaOverlay?.classList.add('active');
   }
 
-  qaClose?.addEventListener('click', () => qaOverlay?.classList.remove('active'));
+  function closeQuickAddModal() {
+    qaOverlay?.classList.remove('active');
+    selectedQAProduct = null;
+  }
+
+  qaClose?.addEventListener('click', closeQuickAddModal);
+  qaCancelBtn?.addEventListener('click', closeQuickAddModal);
+  qaOverlay?.addEventListener('click', (e) => {
+    if (e.target === qaOverlay) closeQuickAddModal();
+  });
 
   document.getElementById('qaIncBtn')?.addEventListener('click', () => {
     qaQuantity++;
@@ -839,16 +858,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Explicit confirmation button action
   qaSubmit?.addEventListener('click', () => {
     if (!selectedQAProduct) return;
-    let cart = JSON.parse(localStorage.getItem('bm_cart') || '[]');
 
-    const found = cart.find(i => i.id === selectedQAProduct.id && i.size === selectedSize && i.color === selectedColor);
-    if (found) {
-      found.qty = (parseInt(found.qty, 10) || 1) + qaQuantity;
+    let cart = [];
+    try {
+      cart = JSON.parse(localStorage.getItem('bm_cart') || '[]');
+    } catch {
+      cart = [];
+    }
+
+    const productId = String(selectedQAProduct.id || selectedQAProduct.sku);
+    const existing = cart.find(i => 
+      String(i.id).toLowerCase() === productId.toLowerCase() && 
+      i.size === selectedSize && 
+      i.color === selectedColor
+    );
+
+    if (existing) {
+      existing.qty = (parseInt(existing.qty, 10) || 1) + qaQuantity;
     } else {
       cart.push({
-        id: selectedQAProduct.id,
+        id: productId,
         size: selectedSize,
         color: selectedColor,
         qty: qaQuantity
@@ -858,7 +890,9 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('bm_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('bm_cart_updated'));
     window.syncGlobalBadges();
-    qaOverlay?.classList.remove('active');
+
+    // Close modal and reveal updated cart drawer
+    closeQuickAddModal();
     window.openCartDrawer();
   });
 

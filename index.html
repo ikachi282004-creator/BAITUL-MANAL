@@ -692,11 +692,16 @@
           <input type="number" id="qaQtyInput" value="1" min="1" readonly>
           <button type="button" class="qty-btn" id="qaIncBtn">+</button>
         </div>
+      <!-- Quick Add Confirmation Action Deck -->
+      <div class="quick-add__cta-deck" style="display: flex; flex-direction: column; gap: 8px; margin-top: 1.25rem;">
+        <button type="button" class="btn-luxury btn-block" id="qaSubmitBtn">
+          <span>Confirm & Add to Bag</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" class="btn-outline-subtle btn-block" id="qaCancelBtn" style="background: none; border: 1px solid #d6cbba; color: #70685f; padding: 10px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;">
+          Cancel
+        </button>
       </div>
-      <button type="button" class="btn-luxury btn-block" id="qaSubmitBtn">
-        <span>Add To Cart</span>
-      </button>
-    </div>
   </div>
 
   <!-- Global Search Modal Overlay -->
