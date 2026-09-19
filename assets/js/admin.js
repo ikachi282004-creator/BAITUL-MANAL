@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Use your live Render Web Service URL
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://your-render-backend-name.onrender.com'; // Replace with your Render backend URL
+    : 'https://baitul-manal-1.onrender.com'; // Replace with your Render backend URL
 
   let catalog = [];
   let ordersList = [];
