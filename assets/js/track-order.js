@@ -77,12 +77,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function cleanSearchQuery(str) {
+    if (!str) return '';
+    let cleaned = str.trim();
+    if (cleaned.startsWith('#')) {
+      cleaned = cleaned.substring(1).trim();
+    }
+    return cleaned;
+  }
+
   trackForm?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const query = queryInput?.value.trim();
+    const rawVal = queryInput?.value || '';
+    const query = cleanSearchQuery(rawVal);
     if (!query) return;
     fetchOrder(query, false);
   });
+
+  // Auto-search if redirected with ?id= in URL (from order-success or profile)
+  const urlParams = new URLSearchParams(window.location.search);
+  const idFromUrl = urlParams.get('id') || urlParams.get('orderId');
+  if (idFromUrl) {
+    const cleanId = cleanSearchQuery(idFromUrl);
+    if (queryInput) queryInput.value = cleanId;
+    fetchOrder(cleanId, false);
+  }
 
   function startLivePolling(query) {
     if (activePollingInterval) clearInterval(activePollingInterval);

@@ -330,12 +330,47 @@ app.get('/api/orders', (req, res) => {
   });
 });
 
-// Order Lookup for Track Order
+// Robust Order Lookup for Track Order Page
 app.get('/api/orders/:orderId', (req, res) => {
-  const orderId = req.params.orderId.trim();
-  db.get('SELECT * FROM orders WHERE order_id = ? OR customer_phone = ? ORDER BY id DESC LIMIT 1', [orderId, orderId], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!row) return res.status(404).json({ error: 'Order not found' });
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  let rawQuery = (req.params.orderId || '').trim();
+  // Strip leading '#' if customer typed/copied '#BM-KW-...'
+  if (rawQuery.startsWith('#')) {
+    rawQuery = rawQuery.substring(1).trim();
+  }
+
+  const cleanDigits = rawQuery.replace(/\D/g, '');
+  const last8Digits = cleanDigits.length >= 8 ? cleanDigits.slice(-8) : cleanDigits;
+
+  const sql = `
+    SELECT * FROM orders 
+    WHERE LOWER(order_id) = LOWER(?) 
+       OR order_id LIKE ?
+       OR customer_phone = ?
+       OR (length(?) >= 8 AND customer_phone LIKE ?)
+    ORDER BY id DESC 
+    LIMIT 1
+  `;
+
+  const params = [
+    rawQuery,
+    `%${rawQuery}%`,
+    rawQuery,
+    last8Digits,
+    `%${last8Digits}%`
+  ];
+
+  db.get(sql, params, (err, row) => {
+    if (err) {
+      console.error('Database query error:', err.message);
+      return res.status(500).json({ error: 'Database lookup error.' });
+    }
+    if (!row) {
+      return res.status(404).json({ error: 'Order reference not found.' });
+    }
 
     res.json({
       orderId: row.order_id,
