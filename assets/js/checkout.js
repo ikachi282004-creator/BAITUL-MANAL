@@ -1,6 +1,6 @@
 /**
  * BAITUL MANAL — Master Checkout Controller (checkout.js)
- * Live-Hydrated Order Calculation & Direct Database Dispatch
+ * Live-Hydrated Order Calculation, Customer Profile Sync & Direct Dispatch
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cart = [];
   }
 
-  // Exact DOM mapping matching checkout.html
+  // Exact DOM elements mapped to checkout.html
   const summaryItemCount = document.getElementById('summaryItemCount');
   const summaryItemsList = document.getElementById('summaryItemsList');
   const tierNoticeText = document.getElementById('tierNoticeText');
@@ -41,7 +41,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   const placeOrderBtn = document.getElementById('placeOrderBtn');
   const custGovernorate = document.getElementById('custGovernorate');
 
-  // Interactive Payment Accordion Handlers
+  // Customer Contact Fields
+  const inputFirstName = document.getElementById('custFirstName');
+  const inputLastName = document.getElementById('custLastName');
+  const inputPhone = document.getElementById('custPhone');
+  const inputEmail = document.getElementById('custEmail');
+
+  // =========================================================================
+  // 1. AUTO-SYNC DETAILS FROM CUSTOMER PROFILE SANCTUARY
+  // =========================================================================
+  function syncCustomerProfileData() {
+    try {
+      const storedProfile = localStorage.getItem('bm_customer_user');
+      if (!storedProfile) return;
+
+      const user = JSON.parse(storedProfile);
+      if (!user) return;
+
+      // Extract First and Last Name
+      if (user.fullName && inputFirstName && inputLastName) {
+        const nameParts = user.fullName.trim().split(' ');
+        inputFirstName.value = nameParts[0] || '';
+        inputLastName.value = nameParts.slice(1).join(' ') || nameParts[0] || '';
+      }
+
+      // Format Kuwait Mobile Number (last 8 digits)
+      if (user.phone && inputPhone) {
+        const rawDigits = user.phone.replace(/\D/g, '');
+        const clean8Digit = rawDigits.length >= 8 ? rawDigits.slice(-8) : rawDigits;
+        inputPhone.value = clean8Digit;
+      }
+
+      // Populate Email if provided
+      if (user.email && inputEmail) {
+        inputEmail.value = user.email;
+      }
+
+      // Visual Luxury Account Sync Confirmation Badge
+      const stepHeader = document.querySelector('#stepCustomer .checkout-card__header');
+      if (stepHeader && !document.getElementById('syncedAccountBadge')) {
+        const badge = document.createElement('div');
+        badge.id = 'syncedAccountBadge';
+        badge.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; background: rgba(39, 174, 96, 0.1); border: 1px solid rgba(39, 174, 96, 0.3); color: #27ae60; padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; margin-top: 6px; letter-spacing: 0.5px;';
+        badge.innerHTML = `<span>✓</span> <span>Profile Synced: ${user.fullName || 'Verified Atelier Member'}</span>`;
+        stepHeader.appendChild(badge);
+      }
+    } catch (e) {
+      console.warn('Profile sync skipped:', e);
+    }
+  }
+
+  syncCustomerProfileData();
+
+  // Interactive Payment Selection
   document.querySelectorAll('input[name="payMethod"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       document.querySelectorAll('.pay-method-card').forEach(card => card.classList.remove('active'));
@@ -57,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Fetch Live Catalog with Cache-Buster
+  // Fetch Live Catalog
   let catalog = [];
   async function fetchCatalog() {
     try {
@@ -80,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   catalog = await fetchCatalog();
 
-  // Restore saved delivery area if available
+  // Restore Saved Delivery Area
   const savedArea = localStorage.getItem('bm_selected_area');
   if (savedArea && custGovernorate) {
     custGovernorate.value = savedArea;
@@ -111,12 +163,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const deliveryFee = (subtotal === 0 || isFree) ? 0.000 : area.fee;
     const grandTotal = subtotal + deliveryFee;
 
-    // 1. Update Title Count
-    if (summaryItemCount) {
-      summaryItemCount.textContent = totalItemsCount;
-    }
+    if (summaryItemCount) summaryItemCount.textContent = totalItemsCount;
 
-    // 2. Update Progress Milestone
     if (tierNoticeText) {
       tierNoticeText.textContent = isFree
         ? 'Free Delivery Unlocked Across Kuwait 🎉'
@@ -133,18 +181,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       tierFill.style.width = `${pct}%`;
     }
 
-    // 3. Update Ledger Amounts
     if (checkoutSubtotal) checkoutSubtotal.textContent = `KD ${subtotal.toFixed(3)}`;
     if (checkoutDelivery) {
       checkoutDelivery.textContent = isFree ? 'KD 0.000 (FREE)' : `KD ${deliveryFee.toFixed(3)}`;
       checkoutDelivery.style.color = isFree ? '#27ae60' : '';
     }
     if (checkoutTotal) checkoutTotal.textContent = `KD ${grandTotal.toFixed(3)}`;
-
-    // 4. Update Place Order & Pay Button Price Tag
-    if (btnPayAmount) {
-      btnPayAmount.textContent = `KD ${grandTotal.toFixed(3)}`;
-    }
+    if (btnPayAmount) btnPayAmount.textContent = `KD ${grandTotal.toFixed(3)}`;
 
     return { subtotal, deliveryFee, grandTotal, totalItemsCount };
   }
@@ -190,7 +233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     calculateTotals();
   }
 
-  // Handle Governorate Dropdown Changes
   custGovernorate?.addEventListener('change', () => {
     localStorage.setItem('bm_selected_area', custGovernorate.value);
     calculateTotals();
@@ -198,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderOrderItems();
 
-  // Master Order Placement Event Handler
+  // Order Submission
   placeOrderBtn?.addEventListener('click', async (e) => {
     e.preventDefault();
 
@@ -207,9 +249,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const firstName = document.getElementById('custFirstName')?.value.trim();
-    const lastName = document.getElementById('custLastName')?.value.trim();
-    const phone = document.getElementById('custPhone')?.value.trim();
+    const firstName = inputFirstName?.value.trim();
+    const lastName = inputLastName?.value.trim();
+    const phone = inputPhone?.value.trim();
+    const email = inputEmail?.value.trim() || '';
     const area = document.getElementById('custArea')?.value.trim();
     const block = document.getElementById('custBlock')?.value.trim();
     const street = document.getElementById('custStreet')?.value.trim();
@@ -221,13 +264,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!firstName || !lastName) {
       alert('Please enter your First and Last Name.');
-      document.getElementById('custFirstName')?.focus();
+      inputFirstName?.focus();
       return;
     }
 
     if (!phone || phone.length < 8) {
       alert('Please enter a valid 8-digit Kuwait Mobile Number.');
-      document.getElementById('custPhone')?.focus();
+      inputPhone?.focus();
       return;
     }
 
@@ -247,6 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       recipient: {
         name: `${firstName} ${lastName}`,
         phone: phone,
+        email: email,
         governorate: govOption,
         address: fullAddress
       },
@@ -276,7 +320,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('bm_customer_phone', phone);
         window.dispatchEvent(new Event('bm_cart_updated'));
 
-        // DIRECT REDIRECT TO DEDICATED MOBILE-FRIENDLY ORDER SUCCESS RECEIPT
         window.location.href = `order-success.html?id=${data.order.orderId}`;
       } else {
         alert(data.error || 'Failed to place order. Please check your network connection.');
