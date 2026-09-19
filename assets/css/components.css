@@ -7052,3 +7052,252 @@ a[href^="tel:"],
   cursor: not-allowed;
   transform: none;
 }
+/* ==========================================================================
+   HEADER & MOBILE LUXURY RESPONSIVE CONTROLS
+   ========================================================================== */
+
+/* 1. Laptop / Desktop Alignment */
+@media (min-width: 992px) {
+  /* Strictly hide hamburger on laptop / desktop */
+  .mobile-menu-btn,
+  #mobileMenuBtn {
+    display: none !important;
+  }
+
+  .header__inner {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    gap: 2rem;
+  }
+
+  .brand-logo {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .desktop-nav {
+    display: flex !important;
+    justify-content: center;
+  }
+
+  .desktop-nav .nav-list {
+    display: flex;
+    gap: 1.8rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .header__actions {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Hide mobile bottom navigation on desktop */
+  .mobile-sticky-dock {
+    display: none !important;
+  }
+}
+
+/* 2. Mobile Header & Trendy Drawer */
+@media (max-width: 991px) {
+  .desktop-nav {
+    display: none !important;
+  }
+
+  .header__inner {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--primary-dark, #181512);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-menu-btn:active {
+    transform: scale(0.92);
+  }
+
+  /* Glassmorphic Trendy Mobile Drawer */
+  .mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 82%;
+    max-width: 340px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 9999;
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.12);
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .mobile-drawer.active {
+    transform: translateX(0);
+  }
+
+  .drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(197, 168, 128, 0.25);
+    margin-bottom: 1.5rem;
+  }
+
+  .drawer__header .brand-logo__primary {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 1.5px;
+    color: var(--primary-gold, #c5a880);
+  }
+
+  .drawer__close {
+    background: #f7f5f2;
+    border: 1px solid rgba(197, 168, 128, 0.3);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #181512;
+  }
+
+  .mobile-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    color: #181512;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link:active {
+    background: rgba(197, 168, 128, 0.12);
+    color: var(--primary-gold-dark, #9e825a);
+  }
+
+  /* Padding offset so content doesn't get covered by sticky bottom bar */
+  body {
+    padding-bottom: 72px;
+  }
+}
+
+/* ==========================================================================
+   TRENDY STICKY BOTTOM DOCK (MOBILE ONLY)
+   ========================================================================== */
+.mobile-sticky-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(214, 203, 186, 0.45);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  z-index: 990;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 0.5rem;
+}
+
+.dock-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #70685f;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+  position: relative;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.dock-item:active {
+  transform: scale(0.92);
+}
+
+.dock-item.active,
+.dock-item:hover {
+  color: var(--primary-gold, #c5a880);
+}
+
+.dock-icon-wrap {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3px;
+}
+
+.dock-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+}
+
+.dock-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  background: #b33939;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+}
