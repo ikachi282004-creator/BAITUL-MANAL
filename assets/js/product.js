@@ -1,6 +1,6 @@
 /**
  * BAITUL MANAL — Master Product Detail Controller (product.js)
- * Live Backend Sync, Robust Cache-Busting & Static Fallback
+ * Live Backend Sync, Robust Cache-Busting & Quiet Cart Addition
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -76,11 +76,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cartCount = getSafeCartCount();
     const wishCount = getSafeWishlistCount();
 
-    document.querySelectorAll('#cartCount, .cart-count-badge, [data-badge="cart"]').forEach(el => {
+    document.querySelectorAll('#cartCount, #dockCartCount, .cart-count-badge, [data-badge="cart"]').forEach(el => {
       el.textContent = cartCount;
     });
 
-    document.querySelectorAll('#wishlistCount, .wishlist-count-badge, [data-badge="wishlist"]').forEach(el => {
+    document.querySelectorAll('#wishlistCount, #dockWishlistCount, .wishlist-count-badge, [data-badge="wishlist"]').forEach(el => {
       el.textContent = wishCount;
     });
   }
@@ -98,12 +98,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     try {
-      const cacheBuster = `?t=${new Date().getTime()}`;
+      const cacheBuster = `?_cb=${Date.now()}`;
       const res = await fetch(`${API_BASE}/api/admin/products${cacheBuster}`, {
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Cache-Control': 'no-cache, no-store'
         }
       });
       clearTimeout(timeoutId);
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error('API returned empty catalog payload');
     } catch (apiErr) {
       console.warn('[Product] Backend unreachable, reading local fallback...', apiErr.message);
-      const localRes = await fetch(STATIC_FALLBACK);
+      const localRes = await fetch(`${STATIC_FALLBACK}?_cb=${Date.now()}`);
       if (!localRes.ok) throw new Error('Local fallback products.json missing');
       return await localRes.json();
     }
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // =========================================================================
-  // 3. EVENT LISTENERS & GLASS ZOOM
+  // 3. EVENT LISTENERS & QUIET CART ADDITION
   // =========================================================================
   function setupEventListeners() {
     // Stepper
@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncBadges();
     });
 
-    // Add To Bag CTA
+    // Add To Bag CTA (Quiet add without drawer opening)
     addToCartBtn?.addEventListener('click', () => {
       if (!product) return;
       let cart = JSON.parse(localStorage.getItem('bm_cart') || '[]');
@@ -343,14 +343,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.dispatchEvent(new Event('storage'));
       syncBadges();
 
-      openBagDrawer();
+      // Visual Button Feedback
+      const originalText = addToCartBtn.innerHTML;
+      addToCartBtn.innerHTML = `<span>✓ Added to Bag</span>`;
+      addToCartBtn.style.background = '#27ae60';
+      addToCartBtn.style.color = '#fff';
+
+      // Pulse Bag Badges
+      const badges = document.querySelectorAll('#cartCount, #dockCartCount, .cart-count-badge');
+      badges.forEach(b => {
+        b.classList.add('badge-bump');
+        setTimeout(() => b.classList.remove('badge-bump'), 400);
+      });
+
+      setTimeout(() => {
+        addToCartBtn.innerHTML = originalText;
+        addToCartBtn.style.background = '';
+        addToCartBtn.style.color = '';
+      }, 1400);
     });
 
-    // Drawer Open / Close Triggers
-    headerCartBtn?.addEventListener('click', openBagDrawer);
+    // Drawer Open Triggers (Only opens when Bag icon or link is clicked)
+    document.addEventListener('click', (e) => {
+      const bagTrigger = e.target.closest('#headerCartBtn, #dockCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
+      if (bagTrigger) {
+        e.preventDefault();
+        openBagDrawer();
+      }
+    });
+
     cartDrawerClose?.addEventListener('click', closeBagDrawer);
     cartOverlay?.addEventListener('click', closeBagDrawer);
-
     drawerKuwaitArea?.addEventListener('change', renderCartDrawer);
   }
 
@@ -370,12 +393,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderCartDrawer();
     if (cartDrawer) cartDrawer.classList.add('active');
     if (cartOverlay) cartOverlay.classList.add('active');
+    document.body.classList.add('drawer-open');
     document.body.style.overflow = 'hidden';
   }
 
   function closeBagDrawer() {
     if (cartDrawer) cartDrawer.classList.remove('active');
     if (cartOverlay) cartOverlay.classList.remove('active');
+    document.body.classList.remove('drawer-open');
     document.body.style.overflow = '';
   }
 
@@ -487,7 +512,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (related.length === 0) return;
 
     relatedRail.innerHTML = related.map(p => {
-      const onSale = p.salePrice !== null && p.salePrice < p.price;
       return `
         <article class="arrival-card" style="background:#fff; border:1px solid rgba(214,203,186,0.5); border-radius:8px; overflow:hidden;">
           <a href="product.html?id=${p.id}" style="display:block; aspect-ratio:3/4; overflow:hidden;">
@@ -503,16 +527,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         </article>
       `;
     }).join('');
-  }
-
-  // =========================================================================
-  // 6. CLEAR STALE SERVICE WORKER CACHE IN NORMAL TABS
-  // =========================================================================
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      for (const registration of registrations) {
-        registration.update();
-      }
-    });
   }
 });
