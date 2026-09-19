@@ -303,9 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function syncToBackend(data) {
-    let authToken = localStorage.getItem('bm_admin_token') || btoa('BaitulManal@2026');
+    let authToken = localStorage.getItem('bm_admin_token');
+    if (!authToken) {
+      authToken = btoa('BaitulManal@2026');
+      localStorage.setItem('bm_admin_token', authToken);
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products/raw`, {
+      const res = await fetch(`${API_BASE}/api/admin/products/raw?token=${encodeURIComponent(authToken)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -608,17 +613,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/customers?_cb=${Date.now()}`, {
+      // Dual-authentication: header + query token bypasses strict proxy stripping
+      const res = await fetch(`${API_BASE}/api/admin/customers?token=${encodeURIComponent(authToken)}&_cb=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache, no-store'
+          'Accept': 'application/json'
         }
       });
 
       if (res.status === 401 || res.status === 403) {
-        localStorage.removeItem('bm_admin_token');
-        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Session expired. Please log out and sign in with the admin password.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Unauthorized. Please logout and log back in with admin password.</td></tr>';
         return;
       }
 
@@ -644,7 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
         </tr>
       `).join('');
-    } catch {
+    } catch (e) {
+      console.error('Customer directory load error:', e);
       tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load customer directory. Check server connection.</td></tr>';
     }
   }

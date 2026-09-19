@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BaitulManal@2026';
 
-// Permissive CORS with explicit preflight & Authorization header support
+// Explicit permissive CORS configuration
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -203,10 +203,23 @@ function autoRestoreVault() {
   });
 }
 
-function requireAdmin(req, res, next) {
-  const authHeader = req.headers['authorization'];
+function checkAdminAuth(req) {
   const expectedToken = Buffer.from(ADMIN_PASSWORD).toString('base64');
-  if (authHeader && (authHeader === `Bearer ${expectedToken}` || authHeader === expectedToken)) {
+  const authHeader = req.headers['authorization'];
+  const queryToken = req.query.token;
+
+  let provided = '';
+  if (authHeader) {
+    provided = authHeader.replace(/^Bearer\s+/i, '').trim();
+  } else if (queryToken) {
+    provided = String(queryToken).trim();
+  }
+
+  return provided === expectedToken || provided === ADMIN_PASSWORD;
+}
+
+function requireAdmin(req, res, next) {
+  if (checkAdminAuth(req)) {
     return next();
   }
   return res.status(403).json({ error: 'Unauthorized. Invalid or expired token.' });
@@ -249,7 +262,11 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // Admin: View All Registered Customer Accounts (ID & Password Directory)
-app.get('/api/admin/customers', requireAdmin, (req, res) => {
+app.get('/api/admin/customers', (req, res) => {
+  if (!checkAdminAuth(req)) {
+    return res.status(403).json({ error: 'Unauthorized. Please verify admin credentials.' });
+  }
+
   db.all('SELECT id, full_name, phone, email, password_hash, created_at FROM customers ORDER BY id DESC', [], (err, rows) => {
     let clientList = [];
     if (!err && rows && rows.length > 0) {
@@ -262,19 +279,26 @@ app.get('/api/admin/customers', requireAdmin, (req, res) => {
         createdAt: r.created_at
       }));
     }
-    const backupClients = getMasterCustomerList();
-    backupClients.forEach(bc => {
-      if (!clientList.some(c => c.phone === bc.phone)) {
-        clientList.push({
-          id: 'ARC',
-          fullName: bc.fullName,
-          phone: bc.phone,
-          email: bc.email || 'None',
-          password: bc.password,
-          createdAt: bc.created_at || 'Archived'
-        });
-      }
-    });
+
+    // Merge persistent backup archive
+    try {
+      const backupClients = getMasterCustomerList();
+      backupClients.forEach(bc => {
+        if (!clientList.some(c => c.phone === bc.phone)) {
+          clientList.push({
+            id: 'ARC',
+            fullName: bc.fullName,
+            phone: bc.phone,
+            email: bc.email || 'None',
+            password: bc.password,
+            createdAt: bc.created_at || 'Archived'
+          });
+        }
+      });
+    } catch (e) {
+      console.error('Backup archive read warning:', e.message);
+    }
+
     res.json(clientList);
   });
 });
