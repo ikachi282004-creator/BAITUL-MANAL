@@ -7325,3 +7325,71 @@ a[href^="tel:"],
     z-index: 999 !important;
   }
 }
+/* ==========================================================================
+   MOBILE ANNOUNCEMENT BAR VISIBILITY & OVERFLOW FIX
+   ========================================================================== */
+@media (max-width: 768px) {
+  .top-bar {
+    padding: 6px 0;
+    min-height: 38px;
+  }
+
+  .top-bar__inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 0 10px !important;
+  }
+
+  /* Give the sliding text max width */
+  .top-bar__slider {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .top-bar__slide {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  /* Compact the promo badge */
+  .top-bar__slide .promo-pill {
+    font-size: 0.62rem !important;
+    padding: 2px 6px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    letter-spacing: 0.3px !important;
+  }
+
+  /* Ensure text scales cleanly and doesn't get clipped */
+  .top-bar__text {
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    color: #e5dfd5 !important;
+  }
+
+  /* Compact language switch button on the right */
+  .top-bar__actions {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .lang-switch-btn {
+    padding: 2px 8px !important;
+    font-size: 0.72rem !important;
+    border-radius: 4px !important;
+    background: rgba(197, 168, 128, 0.15) !important;
+    border: 1px solid rgba(197, 168, 128, 0.35) !important;
+    color: #c5a880 !important;
+  }
+}
