@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://baitul-manal-1.onrender.com'[cite: 3];
+    : 'https://baitul-manal-1.onrender.com';
 
   let catalog = [];
   let ordersList = [];
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inventoryGrid = document.getElementById('inventoryGridContainer');
 
   // Check persisted session token
-  const token = localStorage.getItem('bm_admin_token')[cite: 3];
+  const token = localStorage.getItem('bm_admin_token');
   if (token) {
     unlockPortal();
   }
