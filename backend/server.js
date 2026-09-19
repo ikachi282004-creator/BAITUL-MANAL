@@ -25,6 +25,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper: Standardize Kuwait & International Phone Numbers
+function normalizePhone(rawPhone) {
+  if (!rawPhone) return '';
+  let digits = String(rawPhone).replace(/\D/g, '');
+  if (digits.startsWith('00965')) digits = digits.slice(5);
+  else if (digits.startsWith('965')) digits = digits.slice(3);
+  return digits.length >= 8 ? digits.slice(-8) : digits;
+}
+
 // Locate products.json
 function resolveCatalogPath() {
   const potentialPaths = [
@@ -71,9 +80,10 @@ function saveProductsData(data) {
 }
 
 // -------------------------------------------------------------
-// PERMANENT ORDER BACKUP STORAGE ENGINE
+// PERMANENT ORDER & CUSTOMER BACKUP STORAGE ENGINE
 // -------------------------------------------------------------
 const BACKUP_FILE = path.join(__dirname, 'orders_master_archive.json');
+const CUSTOMERS_BACKUP_FILE = path.join(__dirname, 'customers_master_archive.json');
 
 function appendOrderToDisk(orderObj) {
   try {
@@ -104,8 +114,33 @@ function getMasterBackupList() {
   return [];
 }
 
-// Restore SQLite from Backup File if DB is empty after a Render restart
+function appendCustomerToDisk(customerObj) {
+  try {
+    let list = [];
+    if (fs.existsSync(CUSTOMERS_BACKUP_FILE)) {
+      list = JSON.parse(fs.readFileSync(CUSTOMERS_BACKUP_FILE, 'utf8') || '[]');
+    }
+    const idx = list.findIndex(c => c.phone === customerObj.phone);
+    if (idx >= 0) list[idx] = customerObj;
+    else list.unshift(customerObj);
+    fs.writeFileSync(CUSTOMERS_BACKUP_FILE, JSON.stringify(list, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Failed to write customer archive:', e.message);
+  }
+}
+
+function getMasterCustomerList() {
+  try {
+    if (fs.existsSync(CUSTOMERS_BACKUP_FILE)) {
+      return JSON.parse(fs.readFileSync(CUSTOMERS_BACKUP_FILE, 'utf8') || '[]');
+    }
+  } catch (e) {}
+  return [];
+}
+
+// Restore SQLite from Backup Files if DB is empty after a Render restart
 function autoRestoreVault() {
+  // 1. Orders
   db.get('SELECT COUNT(*) as count FROM orders', (err, row) => {
     if (err) return;
     if (!row || row.count === 0) {
@@ -140,6 +175,24 @@ function autoRestoreVault() {
       }
     }
   });
+
+  // 2. Customers
+  db.get('SELECT COUNT(*) as count FROM customers', (err, row) => {
+    if (!err && (!row || row.count === 0)) {
+      const customers = getMasterCustomerList();
+      if (customers.length > 0) {
+        const stmt = db.prepare(`
+          INSERT OR REPLACE INTO customers (full_name, phone, email, password_hash, created_at)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+        customers.forEach(c => {
+          stmt.run([c.fullName, c.phone, c.email || '', c.password, c.created_at || new Date().toISOString()]);
+        });
+        stmt.finalize();
+        console.log('✅ Customer directory successfully restored.');
+      }
+    }
+  });
 }
 
 function requireAdmin(req, res, next) {
@@ -167,11 +220,13 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   const currentCatalog = getProductsData();
   const backup = getMasterBackupList();
+  const customers = getMasterCustomerList();
   res.json({
     status: 'Online',
     boutique: 'Baitul Manal Fahaheel',
     catalogItemsLoaded: currentCatalog.length,
     ordersArchived: backup.length,
+    registeredClients: customers.length,
     timestamp: new Date().toISOString()
   });
 });
@@ -185,8 +240,39 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(401).json({ success: false, message: 'Invalid Admin Password.' });
 });
 
+// Admin: View All Registered Customer Accounts (ID & Password Directory)
+app.get('/api/admin/customers', requireAdmin, (req, res) => {
+  db.all('SELECT id, full_name, phone, email, password_hash, created_at FROM customers ORDER BY id DESC', [], (err, rows) => {
+    let clientList = [];
+    if (!err && rows && rows.length > 0) {
+      clientList = rows.map(r => ({
+        id: r.id,
+        fullName: r.full_name,
+        phone: r.phone,
+        email: r.email || 'None',
+        password: r.password_hash,
+        createdAt: r.created_at
+      }));
+    }
+    const backupClients = getMasterCustomerList();
+    backupClients.forEach(bc => {
+      if (!clientList.some(c => c.phone === bc.phone)) {
+        clientList.push({
+          id: 'ARC',
+          fullName: bc.fullName,
+          phone: bc.phone,
+          email: bc.email || 'None',
+          password: bc.password,
+          createdAt: bc.created_at || 'Archived'
+        });
+      }
+    });
+    res.json(clientList);
+  });
+});
+
 // -------------------------------------------------------------
-// CUSTOMER AUTH & MANAGEMENT
+// CUSTOMER AUTH & MANAGEMENT (MOBILE & DESKTOP ALIGNED)
 // -------------------------------------------------------------
 
 app.post('/api/customer/register', (req, res) => {
@@ -194,34 +280,75 @@ app.post('/api/customer/register', (req, res) => {
   if (!fullName || !phone || !password) {
     return res.status(400).json({ error: 'Missing details.' });
   }
-  const cleanPhone = phone.replace(/\D/g, '');
-  const sql = `INSERT INTO customers (full_name, phone, email, password_hash) VALUES (?, ?, ?, ?)`;
-  db.run(sql, [fullName, cleanPhone, email || '', password], function (err) {
+  const cleanPhone = normalizePhone(phone);
+  if (cleanPhone.length < 7) {
+    return res.status(400).json({ error: 'Please enter a valid mobile number.' });
+  }
+
+  const createdAt = new Date().toISOString();
+  const customerRecord = { fullName, phone: cleanPhone, email: email || '', password, created_at: createdAt };
+
+  const sql = `INSERT INTO customers (full_name, phone, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)`;
+  db.run(sql, [fullName, cleanPhone, email || '', password, createdAt], function (err) {
     if (err) {
       if (err.message.includes('UNIQUE')) {
         return res.status(409).json({ error: 'Phone number already registered.' });
       }
-      return res.status(500).json({ error: 'Failed to create account.' });
+      appendCustomerToDisk(customerRecord);
+      return res.status(201).json({ success: true, user: customerRecord });
     }
-    res.status(201).json({ success: true, user: { fullName, phone: cleanPhone, email: email || '' } });
+    appendCustomerToDisk(customerRecord);
+    res.status(201).json({ success: true, user: customerRecord });
   });
 });
 
 app.post('/api/customer/login', (req, res) => {
   const { phone, password } = req.body;
-  const cleanPhone = (phone || '').replace(/\D/g, '');
-  db.get(`SELECT * FROM customers WHERE phone = ?`, [cleanPhone], (err, user) => {
-    if (err || !user) return res.status(404).json({ error: 'Account not found.' });
-    if (user.password_hash !== password) return res.status(401).json({ error: 'Incorrect password.' });
-    res.json({ success: true, user: { fullName: user.full_name, phone: user.phone, email: user.email } });
+  const cleanPhone = normalizePhone(phone);
+
+  if (!cleanPhone || cleanPhone.length < 7) {
+    return res.status(400).json({ error: 'Invalid mobile number format.' });
+  }
+
+  db.get(`SELECT * FROM customers WHERE phone LIKE ? OR phone = ?`, [`%${cleanPhone}%`, cleanPhone], (err, user) => {
+    if (user) {
+      if (user.password_hash !== password) {
+        return res.status(401).json({ error: 'Incorrect password.' });
+      }
+      return res.json({
+        success: true,
+        user: { fullName: user.full_name, phone: user.phone, email: user.email }
+      });
+    }
+
+    // Fallback search in master backup file
+    const backupClients = getMasterCustomerList();
+    const matched = backupClients.find(c => c.phone.includes(cleanPhone) || cleanPhone.includes(c.phone));
+    if (matched) {
+      if (matched.password !== password) {
+        return res.status(401).json({ error: 'Incorrect password.' });
+      }
+      return res.json({
+        success: true,
+        user: { fullName: matched.fullName, phone: matched.phone, email: matched.email }
+      });
+    }
+
+    return res.status(404).json({ error: 'Account not found.' });
   });
 });
 
 app.post('/api/customer/reset-password', (req, res) => {
   const { phone, newPassword } = req.body;
-  const cleanPhone = (phone || '').replace(/\D/g, '');
-  db.run(`UPDATE customers SET password_hash = ? WHERE phone = ?`, [newPassword, cleanPhone], function (err) {
-    if (err || this.changes === 0) return res.status(404).json({ error: 'Account not found.' });
+  const cleanPhone = normalizePhone(phone);
+
+  db.run(`UPDATE customers SET password_hash = ? WHERE phone LIKE ?`, [newPassword, `%${cleanPhone}%`], function (err) {
+    const backupClients = getMasterCustomerList();
+    const matched = backupClients.find(c => c.phone.includes(cleanPhone));
+    if (matched) {
+      matched.password = newPassword;
+      fs.writeFileSync(CUSTOMERS_BACKUP_FILE, JSON.stringify(backupClients, null, 2), 'utf8');
+    }
     res.json({ success: true, message: 'Password updated successfully.' });
   });
 });
@@ -260,11 +387,12 @@ app.post('/api/orders', (req, res) => {
   const grandTotal = verifiedSubtotal + deliveryFee;
   const orderId = 'BM-KW-2026-' + Math.floor(1000 + Math.random() * 9000);
   const orderDate = new Date().toISOString();
+  const cleanPhone = normalizePhone(recipient.phone);
 
   const formattedOrder = {
     orderId,
     date: orderDate,
-    recipient,
+    recipient: { ...recipient, phone: cleanPhone },
     paymentMethod: paymentMethod || 'COD',
     items: verifiedItems,
     subtotal: verifiedSubtotal,
@@ -284,7 +412,7 @@ app.post('/api/orders', (req, res) => {
   const params = [
     orderId,
     recipient.name,
-    recipient.phone,
+    cleanPhone,
     deliveryArea || recipient.governorate || 'Al Ahmadi',
     recipient.address,
     paymentMethod || 'COD',
@@ -372,7 +500,7 @@ app.patch('/api/orders/:id/status', (req, res) => {
 // Customer Self-Cancel Order (Strictly PENDING_DISPATCH)
 app.post('/api/customer/cancel-order', (req, res) => {
   const { orderId, phone } = req.body;
-  const cleanPhone = (phone || '').replace(/\D/g, '');
+  const cleanPhone = normalizePhone(phone);
 
   db.get(`SELECT * FROM orders WHERE (order_id = ? OR id = ?)`, [orderId, orderId], (err, row) => {
     if (!row) {
@@ -405,19 +533,17 @@ app.get('/api/orders/:orderId', (req, res) => {
   let rawQuery = (req.params.orderId || '').trim();
   if (rawQuery.startsWith('#')) rawQuery = rawQuery.substring(1).trim();
 
-  const cleanDigits = rawQuery.replace(/\D/g, '');
-  const last8Digits = cleanDigits.length >= 8 ? cleanDigits.slice(-8) : cleanDigits;
+  const cleanDigits = normalizePhone(rawQuery);
 
   const sql = `
     SELECT * FROM orders 
     WHERE LOWER(order_id) = LOWER(?) 
        OR order_id LIKE ? 
-       OR customer_phone = ? 
-       OR (length(?) >= 8 AND customer_phone LIKE ?)
+       OR customer_phone LIKE ?
     ORDER BY id DESC LIMIT 1
   `;
 
-  db.get(sql, [rawQuery, `%${rawQuery}%`, rawQuery, last8Digits, `%${last8Digits}%`], (err, row) => {
+  db.get(sql, [rawQuery, `%${rawQuery}%`, `%${cleanDigits}%`], (err, row) => {
     if (row) {
       return res.json({
         orderId: row.order_id,
@@ -440,7 +566,7 @@ app.get('/api/orders/:orderId', (req, res) => {
     const backup = getMasterBackupList();
     const matched = backup.find(o => 
       o.orderId.toLowerCase() === rawQuery.toLowerCase() || 
-      (o.recipient?.phone && o.recipient.phone.includes(last8Digits))
+      (o.recipient?.phone && o.recipient.phone.includes(cleanDigits))
     );
 
     if (matched) return res.json(matched);
@@ -450,11 +576,10 @@ app.get('/api/orders/:orderId', (req, res) => {
 
 // Customer Dispatches Lookup
 app.get('/api/customer/orders', (req, res) => {
-  const phone = (req.query.phone || '').replace(/\D/g, '');
+  const phone = normalizePhone(req.query.phone || '');
   if (!phone) return res.json([]);
-  const last8 = phone.length >= 8 ? phone.slice(-8) : phone;
 
-  db.all(`SELECT * FROM orders WHERE customer_phone LIKE ? ORDER BY id DESC`, [`%${last8}%`], (err, rows) => {
+  db.all(`SELECT * FROM orders WHERE customer_phone LIKE ? ORDER BY id DESC`, [`%${phone}%`], (err, rows) => {
     let result = [];
     if (rows && rows.length > 0) {
       result = rows.map(r => ({
@@ -468,8 +593,8 @@ app.get('/api/customer/orders', (req, res) => {
 
     const backup = getMasterBackupList();
     backup.forEach(b => {
-      const bPhone = (b.recipient?.phone || '').replace(/\D/g, '');
-      if (bPhone.includes(last8) && !result.some(r => r.orderId === b.orderId)) {
+      const bPhone = normalizePhone(b.recipient?.phone || '');
+      if (bPhone.includes(phone) && !result.some(r => r.orderId === b.orderId)) {
         result.push(b);
       }
     });

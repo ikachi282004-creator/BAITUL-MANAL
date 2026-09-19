@@ -261,6 +261,7 @@
         <button class="tab-btn active" data-tab="inventory">Live Catalog Grid</button>
         <button class="tab-btn" data-tab="orders">Customer Dispatches</button>
         <button class="tab-btn" data-tab="vault">🔒 Permanent Master Vault & Directory</button>
+        <button class="tab-btn" data-tab="customers">👤 Client Accounts (ID & PS)</button>
         <button class="tab-btn" data-tab="raw-json">Raw products.json</button>
       </div>
 
@@ -363,6 +364,28 @@
         </tr>
       </tbody>
     </table>
+  </div>
+</section>
+<!-- PANE: REGISTERED CLIENT PASSWORDS & DIRECTORY -->
+<section id="paneCustomers" class="admin-pane" style="display: none; margin-top: 20px;">
+  <div style="background: #181512; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 8px; padding: 20px;">
+    <h3 style="color: #c5a880; margin: 0 0 16px; font-family: Georgia, serif;">👤 Registered Customer Directory & Passwords</h3>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid #c5a880; text-align: left; color: #c5a880;">
+            <th style="padding: 10px;">#</th>
+            <th style="padding: 10px;">Client Name</th>
+            <th style="padding: 10px;">Mobile Number (Login ID)</th>
+            <th style="padding: 10px;">Email</th>
+            <th style="padding: 10px;">Password</th>
+          </tr>
+        </thead>
+        <tbody id="customersTableBody">
+          <tr><td colspan="5" style="text-align:center; padding:20px; color:#8c8173;">Loading registered clients...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 

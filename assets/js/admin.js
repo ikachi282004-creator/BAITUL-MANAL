@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let catalog = [];
   let ordersList = [];
   let vaultOrders = [];
+  let customersList = [];
 
   const gateCard = document.getElementById('gateCard');
   const dashboardView = document.getElementById('dashboardView');
@@ -57,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function unlockPortal() {
     if (gateCard) gateCard.style.display = 'none';
     if (dashboardView) dashboardView.style.display = 'block';
-    await Promise.all([loadCatalog(), loadOrders()]);
+    await Promise.all([loadCatalog(), loadOrders(), loadCustomerAccounts()]);
   }
 
   // =========================================================================
@@ -327,8 +328,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 2. DISPATCHES & ORDERS ENGINE
+  // 2. DISPATCHES & ORDERS ENGINE + WHATSAPP & GMAIL DISPATCHERS
   // =========================================================================
+  window.sendWhatsAppNotification = (orderId, phone, name, status, total) => {
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+    const recipientNum = cleanPhone.length === 8 ? `965${cleanPhone}` : cleanPhone;
+
+    let message = '';
+    if (status === 'PROCESSING') {
+      message = `*BAITUL MANAL ATELIER*\n\nDear *${name}*,\nYour Order *#${orderId}* is now being handcrafted & tailored at our atelier.\n\nTotal: KD ${Number(total).toFixed(3)}\nTrack Live: https://baitul-manal-store.onrender.com/track-order.html?id=${orderId}`;
+    } else if (status === 'OUT_FOR_DELIVERY') {
+      message = `*BAITUL MANAL COURIER DISPATCH*\n\nDear *${name}*,\nYour parcel *#${orderId}* is *Out for Delivery* with our Kuwait express courier today.\n\nPlease keep KD ${Number(total).toFixed(3)} ready.\nTrack: https://baitul-manal-store.onrender.com/track-order.html?id=${orderId}`;
+    } else if (status === 'DELIVERED') {
+      message = `*BAITUL MANAL — THANK YOU!* 🌹\n\nDear *${name}*,\nYour parcel *#${orderId}* has been successfully delivered!\n\nThank you for choosing Baitul Manal. It has been an honor tailoring your piece. For any styling advice or custom adjustments, our concierge is always at your service.\n\nHave a blessed day! ✨`;
+    } else {
+      message = `*BAITUL MANAL ORDER CONFIRMATION*\n\nDear *${name}*,\nYour Order *#${orderId}* for KD ${Number(total).toFixed(3)} has been confirmed.\nTrack: https://baitul-manal-store.onrender.com/track-order.html?id=${orderId}`;
+    }
+
+    const url = `https://wa.me/${recipientNum}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  window.sendCustomerEmail = (orderId, email, name, total) => {
+    const subject = encodeURIComponent(`Baitul Manal Atelier Order #${orderId} Details & Receipt`);
+    const body = encodeURIComponent(
+      `Dear ${name},\n\n` +
+      `Thank you for choosing Baitul Manal Kuwait.\n\n` +
+      `Order Reference: #${orderId}\n` +
+      `Total Payable: KD ${Number(total).toFixed(3)}\n` +
+      `Track your parcel anytime here: https://baitul-manal-store.onrender.com/track-order.html?id=${orderId}\n\n` +
+      `If you have any custom sizing requests or inquiries, please reply to this email or reach our WhatsApp Concierge at +965 60454629.\n\n` +
+      `Warm regards,\nBaitul Manal Atelier Team\nFahaheel, State of Kuwait`
+    );
+    window.open(`mailto:${email || ''}?subject=${subject}&body=${body}`, '_blank');
+  };
+
   async function loadOrders() {
     const tbody = document.getElementById('ordersTableBody');
 
@@ -341,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!tbody) return;
 
       if (!Array.isArray(ordersList) || !ordersList.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">No dispatches registered yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777; padding:20px;">No dispatches registered yet.</td></tr>';
         return;
       }
 
@@ -369,6 +403,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
               </select>
             `}
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" style="background:#25d366; color:#fff; border:none; border-radius:4px; padding:6px 9px; cursor:pointer; font-weight:700; font-size:0.75rem;" 
+                onclick="window.sendWhatsAppNotification('${o.orderId}', '${o.recipient?.phone}', '${(o.recipient?.name || 'Customer').replace(/'/g, "\\'")}', '${o.status}', ${o.total})">
+                📱 WhatsApp
+              </button>
+              <button type="button" style="background:#ea4335; color:#fff; border:none; border-radius:4px; padding:6px 9px; cursor:pointer; font-weight:700; font-size:0.75rem;" 
+                onclick="window.sendCustomerEmail('${o.orderId}', '${o.recipient?.email || ''}', '${(o.recipient?.name || 'Customer').replace(/'/g, "\\'")}', ${o.total})">
+                ✉️ Gmail
+              </button>
+            </div>
           </td>
         </tr>
       `).join('');
@@ -408,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches.</td></tr>';
     }
   }
 
@@ -549,7 +595,49 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // =========================================================================
-  // 4. TAB NAVIGATION & AUTO-SYNC ENGINE
+  // 4. REGISTERED CLIENT CREDENTIALS DIRECTORY (ID & PS)
+  // =========================================================================
+  async function loadCustomerAccounts() {
+    const tableBody = document.getElementById('customersTableBody');
+    if (!tableBody) return;
+
+    const authToken = localStorage.getItem('bm_admin_token');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/customers?_cb=${Date.now()}`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Cache-Control': 'no-cache, no-store'
+        }
+      });
+      customersList = await res.json();
+
+      if (!Array.isArray(customersList) || !customersList.length) {
+        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8c8173; padding:20px;">No registered client accounts found.</td></tr>';
+        return;
+      }
+
+      tableBody.innerHTML = customersList.map((c, idx) => `
+        <tr style="border-bottom: 1px solid rgba(197, 168, 128, 0.15);">
+          <td style="padding:10px 14px; font-weight:700; color:#c5a880;">#${idx + 1}</td>
+          <td style="padding:10px 14px; color:#fff;"><strong>${c.fullName}</strong></td>
+          <td style="padding:10px 14px; color:#c5a880; font-family:monospace; font-size:0.9rem;">
+            🇰🇼 ${c.phone}
+          </td>
+          <td style="padding:10px 14px; color:#ddd;">${c.email}</td>
+          <td style="padding:10px 14px;">
+            <span style="display:inline-block; background:rgba(197,168,128,0.15); border:1px solid #c5a880; color:#c5a880; padding:4px 10px; border-radius:4px; font-family:monospace; font-weight:700;">
+              ${c.password}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    } catch {
+      tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load customer directory.</td></tr>';
+    }
+  }
+
+  // =========================================================================
+  // 5. TAB NAVIGATION & AUTO-SYNC ENGINE
   // =========================================================================
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -561,14 +649,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const pOrd = document.getElementById('paneOrders');
       const pRaw = document.getElementById('paneRawJson');
       const pVlt = document.getElementById('paneVault');
+      const pCust = document.getElementById('paneCustomers');
 
       if (pInv) pInv.style.display = tab === 'inventory' ? 'block' : 'none';
       if (pOrd) pOrd.style.display = tab === 'orders' ? 'block' : 'none';
       if (pRaw) pRaw.style.display = tab === 'raw-json' ? 'block' : 'none';
       if (pVlt) pVlt.style.display = tab === 'vault' ? 'block' : 'none';
+      if (pCust) pCust.style.display = tab === 'customers' ? 'block' : 'none';
 
       if (tab === 'orders') loadOrders();
       if (tab === 'vault') loadVaultData();
+      if (tab === 'customers') loadCustomerAccounts();
     });
   });
 
@@ -584,11 +675,14 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(function () {
     const paneOrders = document.getElementById('paneOrders');
     const paneVault = document.getElementById('paneVault');
+    const paneCust = document.getElementById('paneCustomers');
 
     if (paneOrders && paneOrders.style.display !== 'none') {
       loadOrders();
     } else if (paneVault && paneVault.style.display !== 'none') {
       loadVaultData();
+    } else if (paneCust && paneCust.style.display !== 'none') {
+      loadCustomerAccounts();
     }
   }, 10000);
 });
