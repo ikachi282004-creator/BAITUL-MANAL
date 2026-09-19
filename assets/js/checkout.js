@@ -1,269 +1,163 @@
-/**
- * BAITUL MANAL — Master Checkout Controller (checkout.js)
- * Fully wired to checkout.html elements with Node.js & SQLite integration
- */
-
 document.addEventListener('DOMContentLoaded', async () => {
-  const FREE_SHIPPING_THRESHOLD = 20.000;
-  let catalog = [];
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://baitul-manal-1.onrender.com';
+
+  const KUWAIT_AREAS = [
+    { id: 'ahmadi', name: 'Al Ahmadi & Fahaheel', fee: 1.500 },
+    { id: 'capital', name: 'Kuwait City & Al Asimah', fee: 2.000 },
+    { id: 'hawally', name: 'Hawally & Salmiya', fee: 2.000 },
+    { id: 'farwaniya', name: 'Farwaniya & Khaitan', fee: 2.000 },
+    { id: 'mubarak', name: 'Mubarak Al-Kabeer', fee: 2.000 },
+    { id: 'jahra', name: 'Al Jahra & Suburbs', fee: 2.500 }
+  ];
+
   let cart = [];
-  let selectedPayment = 'knet';
-
-  // Kuwait Governorates Fee Structure
-  const GOV_FEES = {
-    ahmadi: 1.500,
-    capital: 2.000,
-    hawally: 2.000,
-    farwaniya: 2.000,
-    mubarak: 2.000,
-    jahra: 2.500
-  };
-
-  // DOM Elements: Form & Inputs
-  const govSelect = document.getElementById('custGovernorate');
-  const itemsContainer = document.getElementById('summaryItemsList');
-  const summaryCount = document.getElementById('summaryItemCount');
-  const subtotalEl = document.getElementById('checkoutSubtotal');
-  const deliveryEl = document.getElementById('checkoutDelivery');
-  const totalEl = document.getElementById('checkoutTotal');
-  const tierNotice = document.getElementById('tierNoticeText');
-  const tierFill = document.getElementById('tierFill');
-  const placeOrderBtn = document.getElementById('placeOrderBtn');
-  const btnPayAmount = document.getElementById('btnPayAmount');
-
-  // 1. Read Cart Data
   try {
     cart = JSON.parse(localStorage.getItem('bm_cart') || '[]');
-  } catch (e) {
+  } catch {
     cart = [];
   }
 
-  if (!Array.isArray(cart) || cart.length === 0) {
-    alert('Your bag is currently empty. Redirecting to catalog...');
-    window.location.href = 'shop.html';
-    return;
-  }
-
-  // 2. Fetch Catalog for Metadata (titles, images, pricing)
+  // Load products to calculate verified prices
+  let catalog = [];
   try {
-    const res = await fetch('assets/data/products.json');
-    if (res.ok) catalog = await res.json();
-  } catch (e) {
-    console.warn('Catalog offline fallback:', e);
+    const res = await fetch(`${API_BASE}/api/admin/products?t=${new Date().getTime()}`);
+    catalog = await res.json();
+  } catch {
+    try {
+      const fallback = await fetch('assets/data/products.json');
+      catalog = await fallback.json();
+    } catch (e) {
+      catalog = [];
+    }
   }
 
-  // =========================================================================
-  // 3. PAYMENT METHOD SWITCHER
-  // =========================================================================
-  const paymentCards = document.querySelectorAll('.pay-method-card');
-  const knetDetails = document.getElementById('knetDetails');
-  const cardDetails = document.getElementById('cardDetails');
-  const codDetails = document.getElementById('codDetails');
+  const itemsContainer = document.getElementById('checkoutOrderItems') || document.getElementById('orderSummaryItems');
+  const subtotalEl = document.getElementById('checkoutSubtotal') || document.getElementById('summarySubtotal');
+  const deliveryEl = document.getElementById('checkoutDelivery') || document.getElementById('summaryDelivery');
+  const totalEl = document.getElementById('checkoutTotal') || document.getElementById('summaryTotal');
+  const govSelect = document.getElementById('custGov') || document.querySelector('select[name="governorate"]');
+  const checkoutForm = document.getElementById('checkoutForm') || document.querySelector('form');
+  const submitBtn = document.getElementById('placeOrderBtn') || document.querySelector('button[type="submit"]');
 
-  paymentCards.forEach(card => {
-    card.addEventListener('click', () => {
-      paymentCards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-
-      const radio = card.querySelector('input[name="payMethod"]');
-      if (radio) {
-        radio.checked = true;
-        selectedPayment = radio.value;
-      }
-
-      // Toggle drawer panels
-      if (knetDetails) knetDetails.style.display = (selectedPayment === 'knet') ? 'block' : 'none';
-      if (cardDetails) cardDetails.style.display = (selectedPayment === 'card') ? 'block' : 'none';
-      if (codDetails) codDetails.style.display = (selectedPayment === 'cod') ? 'block' : 'none';
-    });
-  });
-
-  // =========================================================================
-  // 4. SUMMARY CALCULATION & RENDERING
-  // =========================================================================
-  function calculateAndRender() {
+  function calculateTotals() {
     let subtotal = 0;
-    let totalQty = 0;
+    cart.forEach(item => {
+      const prod = catalog.find(p => String(p.id) === String(item.id) || String(p.sku) === String(item.id));
+      const price = prod ? (Number(prod.salePrice) || Number(prod.price)) : 0;
+      subtotal += price * (parseInt(item.qty, 10) || 1);
+    });
 
-    // Render Items
-    if (itemsContainer) {
-      itemsContainer.innerHTML = cart.map(item => {
-        const prod = catalog.find(p => p.id === item.id);
-        const title = prod?.name?.en || item.name || item.id;
-        const unit = prod?.salePrice || prod?.price || item.price || 0;
-        const qty = parseInt(item.qty, 10) || 1;
-        const lineTotal = unit * qty;
-        const img = prod?.images?.[0] || 'assets/images/placeholder.jpg';
+    const selectedGov = govSelect ? govSelect.value.toLowerCase() : 'ahmadi';
+    const area = KUWAIT_AREAS.find(a => selectedGov.includes(a.id)) || KUWAIT_AREAS[0];
+    const isFree = subtotal >= 20.000;
+    const deliveryFee = isFree ? 0.000 : area.fee;
+    const grandTotal = subtotal + deliveryFee;
 
-        subtotal += lineTotal;
-        totalQty += qty;
-
-        return `
-          <div class="summary-item" style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
-            <img src="${img}" alt="${title}" style="width: 48px; height: 62px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(214,203,186,0.6);" />
-            <div style="flex: 1;">
-              <h4 style="font-family: 'Playfair Display', serif; font-size: 0.88rem; margin: 0 0 2px; color: #181512;">${title}</h4>
-              <span style="font-size: 0.72rem; color: #8c8173;">${item.size || 'M'} • ${item.color || 'Standard'} • Qty: ${qty}</span>
-            </div>
-            <strong style="font-size: 0.88rem; color: #181512;">KD ${lineTotal.toFixed(3)}</strong>
-          </div>
-        `;
-      }).join('');
-    }
-
-    if (summaryCount) summaryCount.textContent = totalQty;
-
-    // Shipping calculation
-    const govKey = govSelect?.value || 'ahmadi';
-    const isFree = subtotal >= FREE_SHIPPING_THRESHOLD;
-    const shippingFee = isFree ? 0.000 : (GOV_FEES[govKey] || 1.500);
-    const grandTotal = subtotal + shippingFee;
-
-    // Update Totals DOM
     if (subtotalEl) subtotalEl.textContent = `KD ${subtotal.toFixed(3)}`;
-    if (deliveryEl) {
-      deliveryEl.textContent = isFree ? 'KD 0.000 (FREE)' : `KD ${shippingFee.toFixed(3)}`;
-      deliveryEl.style.color = isFree ? '#27ae60' : '';
-    }
+    if (deliveryEl) deliveryEl.textContent = isFree ? 'KD 0.000 (FREE)' : `KD ${deliveryFee.toFixed(3)}`;
     if (totalEl) totalEl.textContent = `KD ${grandTotal.toFixed(3)}`;
-    if (btnPayAmount) btnPayAmount.textContent = `KD ${grandTotal.toFixed(3)}`;
 
-    // Progress Bar
-    if (tierNotice) {
-      tierNotice.textContent = isFree
-        ? 'Free Delivery Unlocked Across Kuwait 🎉'
-        : `Add KD ${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(3)} for Free Delivery`;
-    }
-    if (tierFill) {
-      const pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
-      tierFill.style.width = `${pct}%`;
-    }
-
-    return { subtotal, shippingFee, grandTotal };
+    return { subtotal, deliveryFee, grandTotal };
   }
 
-  // Listen for governorate change
-  govSelect?.addEventListener('change', calculateAndRender);
+  function renderCheckoutSummary() {
+    if (!itemsContainer) return;
+    if (!cart.length) {
+      itemsContainer.innerHTML = '<p style="color:#888; padding: 1rem 0;">Your shopping bag is empty.</p>';
+      return;
+    }
 
-  // Initial Calculation
-  calculateAndRender();
+    itemsContainer.innerHTML = cart.map(item => {
+      const prod = catalog.find(p => String(p.id) === String(item.id) || String(p.sku) === String(item.id));
+      const price = prod ? (Number(prod.salePrice) || Number(prod.price)) : 0;
+      const title = prod?.name?.en || prod?.name || item.id;
+      const img = prod?.images?.[0] || prod?.image || 'assets/images/placeholder.jpg';
 
-  // =========================================================================
-  // 5. SUBMIT & PLACE ORDER (NODE.JS / SQLITE INTEGRATION)
-  // =========================================================================
-  placeOrderBtn?.addEventListener('click', async (e) => {
+      return `
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;">
+          <img src="${img}" style="width:45px; height:60px; object-fit:cover; border-radius:4px;">
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:0.85rem;">${title}</div>
+            <div style="font-size:0.75rem; color:#888;">${item.size || 'M'} • ${item.color || 'Standard'} (x${item.qty})</div>
+          </div>
+          <div style="font-weight:700; font-size:0.85rem;">KD ${(price * (item.qty || 1)).toFixed(3)}</div>
+        </div>
+      `;
+    }).join('');
+
+    calculateTotals();
+  }
+
+  govSelect?.addEventListener('change', calculateTotals);
+  renderCheckoutSummary();
+
+  // Handle Form Submission
+  checkoutForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Validate Required Inputs
-    const firstName = document.getElementById('custFirstName')?.value.trim();
-    const lastName = document.getElementById('custLastName')?.value.trim();
-    const phone = document.getElementById('custPhone')?.value.trim();
-    const gov = govSelect?.options[govSelect.selectedIndex]?.text || 'Al Ahmadi';
-    const area = document.getElementById('custArea')?.value.trim();
-    const block = document.getElementById('custBlock')?.value.trim();
-    const street = document.getElementById('custStreet')?.value.trim();
-    const house = document.getElementById('custHouse')?.value.trim();
-
-    if (!firstName || !lastName || !phone || !area || !block || !street || !house) {
-      alert('Please fill in all required customer name, phone, and address details marked with an asterisk (*).');
+    if (!cart.length) {
+      alert('Your shopping bag is empty.');
       return;
     }
 
-    if (phone.length < 8) {
-      alert('Please enter a valid 8-digit Kuwait mobile number.');
+    const name = document.getElementById('custName')?.value.trim() || document.querySelector('input[name="name"]')?.value.trim();
+    const phone = document.getElementById('custPhone')?.value.trim() || document.querySelector('input[name="phone"]')?.value.trim();
+    const governorate = govSelect ? govSelect.value : 'Al Ahmadi';
+    const address = document.getElementById('custAddress')?.value.trim() || document.querySelector('textarea[name="address"]')?.value.trim();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'K-Net Local Debit';
+
+    if (!name || !phone || !address) {
+      alert('Please fill in your full name, phone number, and delivery address.');
       return;
     }
 
-    const { subtotal, shippingFee, grandTotal } = calculateAndRender();
+    const { subtotal, deliveryFee, grandTotal } = calculateTotals();
 
-    // Map Payment Method Label
-    const paymentLabels = {
-      knet: 'K-Net Local Debit Card',
-      card: 'Credit Card (Visa/MasterCard)',
-      cod: 'Cash on Delivery (COD)'
+    const payload = {
+      recipient: { name, phone, governorate, address },
+      items: cart,
+      paymentMethod,
+      deliveryArea: governorate,
+      subtotal,
+      deliveryFee,
+      total: grandTotal
     };
 
-    const paymentText = paymentLabels[selectedPayment] || 'K-Net';
-
-    // Construct Payload for Backend
-    const orderPayload = {
-      recipient: {
-        name: `${firstName} ${lastName}`,
-        phone: `+965 ${phone}`,
-        address: `Area: ${area}, Block ${block}, Street ${street}, House ${house}`
-      },
-      deliveryArea: gov,
-      paymentMethod: paymentText,
-      items: cart
-    };
-
-    // Provide visual submission feedback
-    placeOrderBtn.disabled = true;
-    placeOrderBtn.innerHTML = '<span>Verifying with Boutique Server...</span>';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing Dispatch...';
+    }
 
     try {
-      // Send Order to Backend Server
-      const response = await fetch('https://baitul-manal-1.onrender.com', {
+      const res = await fetch(`${API_BASE}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload)
+        body: JSON.stringify(payload)
       });
 
-      const data = await response.json();
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.removeItem('bm_cart');
+        localStorage.setItem('bm_last_order', JSON.stringify(data.order));
+        localStorage.setItem('bm_customer_phone', phone);
+        window.dispatchEvent(new Event('bm_cart_updated'));
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Server error occurred');
+        window.location.href = `track-order.html?id=${data.order.orderId}`;
+      } else {
+        alert(data.error || 'Failed to register order. Please try again.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Complete Order';
+        }
       }
-
-      // Save Finalized Backend Verified Order to localStorage
-      localStorage.setItem('bm_last_order', JSON.stringify(data.order));
-
-      // Clear active bag
-      localStorage.removeItem('bm_cart');
-      window.dispatchEvent(new Event('bm_cart_updated'));
-      window.dispatchEvent(new Event('storage'));
-
-      // Transition to success voucher page
-      window.location.href = 'order-success.html';
-
     } catch (err) {
-      console.warn('Backend server not reachable, executing offline client fallback:', err);
-
-      // Offline Fallback Order
-      const fallbackOrder = {
-        orderId: 'BM-KW-2026-' + Math.floor(1000 + Math.random() * 9000),
-        date: new Date().toLocaleDateString('en-GB'),
-        recipient: {
-          name: `${firstName} ${lastName}`,
-          phone: `+965 ${phone}`,
-          governorate: gov,
-          address: `Area: ${area}, Block ${block}, Street ${street}, House ${house}`
-        },
-        paymentMethod: paymentText,
-        items: cart.map(i => {
-          const prod = catalog.find(p => p.id === i.id);
-          return {
-            id: i.id,
-            name: prod?.name?.en || i.name || i.id,
-            size: i.size || 'Standard',
-            color: i.color || 'Original',
-            unitPrice: prod?.salePrice || prod?.price || i.price || 0,
-            qty: parseInt(i.qty, 10) || 1,
-            lineTotal: (prod?.salePrice || prod?.price || i.price || 0) * (parseInt(i.qty, 10) || 1)
-          };
-        }),
-        subtotal: subtotal,
-        deliveryFee: shippingFee,
-        discount: 0.000,
-        total: grandTotal
-      };
-
-      localStorage.setItem('bm_last_order', JSON.stringify(fallbackOrder));
-      localStorage.removeItem('bm_cart');
-      window.dispatchEvent(new Event('bm_cart_updated'));
-      window.dispatchEvent(new Event('storage'));
-
-      window.location.href = 'order-success.html';
+      alert('Network error connecting to dispatch server.');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Complete Order';
+      }
     }
   });
 });

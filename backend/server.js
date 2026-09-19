@@ -1,5 +1,5 @@
 /**
- * BAITUL MANAL — Core API & Admin Operations Server (server.js)
+ * BAITUL MANAL — Core API, Admin Operations & Order Engine (server.js)
  */
 const express = require('express');
 const cors = require('cors');
@@ -96,7 +96,6 @@ app.post('/api/admin/login', (req, res) => {
 // Public Store & Health Endpoints
 // -------------------------------------------------------------
 
-// Root Landing
 app.get('/', (req, res) => {
   res.send(`
     <div style="font-family: -apple-system, sans-serif; text-align: center; padding-top: 50px; background: #121212; color: #f5f5f5; min-height: 100vh;">
@@ -110,7 +109,6 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Health Check
 app.get('/api/health', (req, res) => {
   const currentCatalog = getProductsData();
   res.json({
@@ -121,7 +119,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Create Order (Checkout Flow)
+// -------------------------------------------------------------
+// Order Management, Dispatch, Tracking & Profile Endpoints
+// -------------------------------------------------------------
+
+// Place Order
 app.post('/api/orders', (req, res) => {
   const { recipient, items, paymentMethod, deliveryArea } = req.body;
 
@@ -189,21 +191,26 @@ app.post('/api/orders', (req, res) => {
       success: true,
       order: {
         orderId,
-        date: new Date().toLocaleDateString('en-GB'),
+        date: new Date().toISOString(),
         recipient,
         paymentMethod,
         items: verifiedItems,
         subtotal: verifiedSubtotal,
         deliveryFee,
         discount: 0.000,
-        total: grandTotal
+        total: grandTotal,
+        status: 'PENDING_DISPATCH'
       }
     });
   });
 });
 
-// Retrieve Orders
+// Retrieve All Orders (Admin Dispatches View - Live No-Cache)
 app.get('/api/orders', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   db.all('SELECT * FROM orders ORDER BY id DESC', [], (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -221,10 +228,57 @@ app.get('/api/orders', (req, res) => {
       subtotal: r.subtotal,
       deliveryFee: r.delivery_fee,
       total: r.grand_total,
-      status: r.fulfillment_status,
+      status: r.fulfillment_status || 'PENDING_DISPATCH',
       date: r.created_at
     }));
     res.json(formatted);
+  });
+});
+
+// Order Lookup for Track Order Page
+app.get('/api/orders/:orderId', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache');
+  const orderId = req.params.orderId.trim();
+
+  db.get('SELECT * FROM orders WHERE order_id = ? OR customer_phone = ? ORDER BY id DESC LIMIT 1', [orderId, orderId], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Order not found' });
+
+    res.json({
+      orderId: row.order_id,
+      recipient: {
+        name: row.customer_name,
+        phone: row.customer_phone,
+        governorate: row.governorate,
+        address: row.full_address
+      },
+      paymentMethod: row.payment_method,
+      items: JSON.parse(row.items_json || '[]'),
+      subtotal: row.subtotal,
+      deliveryFee: row.delivery_fee,
+      total: row.grand_total,
+      status: row.fulfillment_status || 'PENDING_DISPATCH',
+      date: row.created_at
+    });
+  });
+});
+
+// Customer Past Orders Lookup for My Profile
+app.get('/api/customer/orders', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache');
+  const phone = (req.query.phone || '').trim();
+  if (!phone) return res.json([]);
+
+  db.all('SELECT * FROM orders WHERE customer_phone = ? ORDER BY id DESC', [phone], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const list = rows.map(r => ({
+      orderId: r.order_id,
+      total: r.grand_total,
+      status: r.fulfillment_status || 'PENDING_DISPATCH',
+      items: JSON.parse(r.items_json || '[]'),
+      date: r.created_at
+    }));
+    res.json(list);
   });
 });
 
@@ -232,7 +286,6 @@ app.get('/api/orders', (req, res) => {
 // Admin Inventory & Catalog Control Endpoints
 // -------------------------------------------------------------
 
-// Fetch raw catalog with no-cache headers
 app.get('/api/admin/products', (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -245,7 +298,6 @@ app.get('/api/admin/products', (req, res) => {
   }
 });
 
-// Save complete raw JSON payload
 app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
   try {
     const updatedData = req.body;
@@ -256,52 +308,6 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
     res.json({ success: true, message: 'Inventory synced live!', count: updatedData.length });
   } catch (err) {
     res.status(500).json({ error: 'Failed to write catalog file.' });
-  }
-});
-
-// Update specific product entry
-app.patch('/api/admin/products/:id', requireAdmin, (req, res) => {
-  try {
-    const productId = req.params.id;
-    const updates = req.body;
-    let products = getProductsData();
-
-    const index = products.findIndex((p) => String(p.id) === String(productId) || String(p.sku) === String(productId));
-    if (index === -1) {
-      return res.status(404).json({ error: 'Product not found.' });
-    }
-
-    products[index] = { ...products[index], ...updates };
-    saveProductsData(products);
-    res.json({ success: true, product: products[index] });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to update product.' });
-  }
-});
-
-// Add new product
-app.post('/api/admin/products', requireAdmin, (req, res) => {
-  try {
-    const newProduct = req.body;
-    let products = getProductsData();
-    products.push(newProduct);
-    saveProductsData(products);
-    res.json({ success: true, message: 'Product added successfully.', product: newProduct });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to add product.' });
-  }
-});
-
-// Delete product
-app.delete('/api/admin/products/:id', requireAdmin, (req, res) => {
-  try {
-    const productId = req.params.id;
-    let products = getProductsData();
-    const filtered = products.filter((p) => String(p.id) !== String(productId) && String(p.sku) !== String(productId));
-    saveProductsData(filtered);
-    res.json({ success: true, message: 'Product removed.' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete product.' });
   }
 });
 

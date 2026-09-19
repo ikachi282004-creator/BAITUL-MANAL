@@ -106,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="card-fields">
-            <!-- Row 1: Badges & Flags -->
             <div class="field-row">
               <label class="checkbox-row" style="flex: 1;">
                 <input type="checkbox" class="field-is-new" ${isNew ? 'checked' : ''} 
@@ -116,29 +115,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div class="field-group" style="flex: 2;">
                 <label>Custom Sale Tag Text</label>
-                <input type="text" value="${customSaleTag}" class="field-saletag" placeholder="-30% OFF / RAMADAN SALE"
+                <input type="text" value="${customSaleTag}" class="field-saletag" placeholder="-30% OFF / SALE"
                   oninput="document.getElementById('saleBadgePreview_${idx}').textContent = this.value">
               </div>
             </div>
 
-            <!-- Row 2: SKU, Category & SubCategory -->
             <div class="field-row">
               <div class="field-group" style="flex: 1.5;">
                 <label>SKU / ID</label>
                 <input type="text" value="${p.id || p.sku || ''}" class="field-id">
               </div>
               <div class="field-group" style="flex: 2;">
-                <label>Department / Category</label>
+                <label>Category</label>
                 <input type="text" value="${p.category || 'women'}" class="field-category" 
                   oninput="document.getElementById('catBadgePreview_${idx}').textContent = this.value">
               </div>
               <div class="field-group" style="flex: 2;">
-                <label>SubCategory / Rail Tag</label>
+                <label>SubCategory Tag</label>
                 <input type="text" value="${p.subCategory || ''}" class="field-subcategory" placeholder="darra / maid-uniform">
               </div>
             </div>
 
-            <!-- Row 3: Images -->
             <div class="field-row">
               <div class="field-group" style="flex: 1;">
                 <label>Main Image URL</label>
@@ -147,11 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div class="field-group" style="flex: 1;">
                 <label>Hover Flip Image URL (Alt)</label>
-                <input type="text" value="${imgAlt}" class="field-image-alt" placeholder="assets/images/...">
+                <input type="text" value="${imgAlt}" class="field-image-alt">
               </div>
             </div>
 
-            <!-- Row 4: Titles -->
             <div class="field-row">
               <div class="field-group">
                 <label>Title (English)</label>
@@ -163,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
 
-            <!-- Row 5: Pricing -->
             <div class="field-row">
               <div class="field-group">
                 <label>Regular Price (KD)</label>
@@ -180,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
 
-            <!-- Row 6: Sizes & Color Swatches -->
             <div class="field-group">
               <label>Sizes (comma separated)</label>
               <input type="text" value="${sizesStr}" class="field-sizes">
@@ -188,10 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div class="field-group">
               <label>Color Swatches (Name #hex, separated by comma)</label>
-              <input type="text" value="${colorsStr}" class="field-colors" placeholder="Black #000000, Gold #c5a880, Navy #0a192f">
+              <input type="text" value="${colorsStr}" class="field-colors" placeholder="Black #000000, Gold #c5a880">
             </div>
 
-            <!-- Row 7: Description -->
             <div class="field-group">
               <label>Product Description</label>
               <textarea class="field-desc">${descEn}</textarea>
@@ -207,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // Harvest data from grid and save
   document.getElementById('saveAllInventoryBtn').addEventListener('click', async () => {
     const cards = document.querySelectorAll('.product-editor-card');
     const updatedCatalog = [];
@@ -228,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const stock = parseInt(card.querySelector('.field-stock').value, 10) || 0;
       const sizes = card.querySelector('.field-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
 
-      // Parse colors string: "Name #HEX, Name #HEX"
       const colors = card.querySelector('.field-colors').value.split(',').map(c => {
         const parts = c.trim().split(' ');
         const hex = parts.find(p => p.startsWith('#')) || '#c5a880';
@@ -237,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }).filter(c => c.name);
 
       const desc = card.querySelector('.field-desc').value.trim();
-
       const images = [imageMain];
       if (imageAlt) images.push(imageAlt);
 
@@ -262,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
     await syncToBackend(updatedCatalog);
   });
 
-  // Add Product Button
   document.getElementById('addNewProductBtn').addEventListener('click', () => {
     const newSku = 'BM-KW-' + Math.floor(100 + Math.random() * 900);
     catalog.unshift({
@@ -331,27 +320,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Orders Retrieval with Live Cache-Busting & Status Styling
   async function loadOrders() {
+    const tbody = document.getElementById('ordersTableBody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#c5a880; padding:20px;">Fetching dispatches...</td></tr>';
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/orders`);
+      const res = await fetch(`${API_BASE}/api/orders?t=${new Date().getTime()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       ordersList = await res.json();
-      const tbody = document.getElementById('ordersTableBody');
-      if (!ordersList.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">No dispatches registered.</td></tr>';
+
+      if (!Array.isArray(ordersList) || !ordersList.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777; padding:20px;">No dispatches registered yet.</td></tr>';
         return;
       }
+
       tbody.innerHTML = ordersList.map(o => `
         <tr>
-          <td><strong>${o.orderId}</strong></td>
+          <td><strong style="color:var(--bm-gold);">${o.orderId}</strong><br><small style="color:#666;">${o.date ? new Date(o.date).toLocaleDateString('en-GB') : ''}</small></td>
           <td>${o.recipient?.name || 'Customer'}<br><small style="color:#888;">${o.recipient?.phone || ''}</small></td>
           <td>${o.recipient?.governorate || ''}<br><small style="color:#888;">${o.recipient?.address || ''}</small></td>
           <td>${o.paymentMethod || 'K-Net'}</td>
           <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
-          <td><span style="color:var(--bm-gold);">${o.status || 'Pending'}</span></td>
+          <td>
+            <span style="background: rgba(197, 168, 128, 0.15); color: var(--bm-gold); padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">
+              ${o.status || 'PENDING_DISPATCH'}
+            </span>
+          </td>
         </tr>
       `).join('');
     } catch (e) {
-      console.warn('Orders fetch error:', e);
+      console.error('Orders fetch error:', e);
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c; padding:20px;">Failed to load dispatches from server.</td></tr>';
     }
   }
 
@@ -363,8 +366,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('paneInventory').style.display = tab === 'inventory' ? 'block' : 'none';
       document.getElementById('paneOrders').style.display = tab === 'orders' ? 'block' : 'none';
       document.getElementById('paneRawJson').style.display = tab === 'raw-json' ? 'block' : 'none';
+      if (tab === 'orders') loadOrders();
     });
   });
 
-  document.getElementById('refreshOrdersBtn')?.addEventListener('click', loadOrders);
+  const refreshBtn = document.getElementById('refreshOrdersBtn');
+  if (refreshBtn) {
+    refreshBtn.onclick = (e) => {
+      e.preventDefault();
+      loadOrders();
+    };
+  }
 });
