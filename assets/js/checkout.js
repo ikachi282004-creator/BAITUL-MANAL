@@ -276,7 +276,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('bm_customer_phone', phone);
         window.dispatchEvent(new Event('bm_cart_updated'));
 
-        window.location.href = `track-order.html?id=${data.order.orderId}`;
+        // DIRECT REDIRECT TO DEDICATED MOBILE-FRIENDLY ORDER SUCCESS RECEIPT
+        window.location.href = `order-success.html?id=${data.order.orderId}`;
       } else {
         alert(data.error || 'Failed to place order. Please check your network connection.');
         placeOrderBtn.disabled = false;
