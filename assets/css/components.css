@@ -7530,3 +7530,95 @@ a[href^="tel:"],
     flex-shrink: 0 !important;
   }
 }
+/* ==========================================================================
+   UNIFIED LUXURY QUICK ADD BAR (DESKTOP & MOBILE)
+   ========================================================================== */
+
+/* Remove any legacy overflow styling */
+.arrival-card__quick {
+  display: none !important;
+}
+
+.arrival-card__canvas {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.arrival-card__quick-bar {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 10;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.qa-bar-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(214, 203, 186, 0.6);
+  color: #181512;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.qa-bar-btn:hover {
+  background: var(--primary-gold, #c5a880);
+  border-color: var(--primary-gold, #c5a880);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(197, 168, 128, 0.35);
+}
+
+.qa-bar-btn:active {
+  transform: scale(0.97);
+}
+
+/* Desktop behavior: sleek reveal on card hover */
+@media (min-width: 769px) {
+  .arrival-card__quick-bar {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .arrival-card:hover .arrival-card__quick-bar {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile behavior: compact, always accessible, zero side overflow */
+@media (max-width: 768px) {
+  .arrival-card__quick-bar {
+    opacity: 1;
+    transform: translateY(0);
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+  }
+
+  .qa-bar-btn {
+    font-size: 0.70rem;
+    padding: 6px 8px;
+    border-radius: 5px;
+  }
+
+  .qa-bar-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+}

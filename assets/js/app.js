@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartCount = getSafeCartCount();
     const wishlistCount = getSafeWishlistCount();
 
-    const cartBadges = document.querySelectorAll('#cartCount, .cart-count-badge, [data-badge="cart"]');
-    const wishlistBadges = document.querySelectorAll('#wishlistCount, .wishlist-count-badge, [data-badge="wishlist"]');
+    const cartBadges = document.querySelectorAll('#cartCount, #dockCartCount, .cart-count-badge, [data-badge="cart"]');
+    const wishlistBadges = document.querySelectorAll('#wishlistCount, #dockWishlistCount, .wishlist-count-badge, [data-badge="wishlist"]');
 
     cartBadges.forEach(el => {
       el.textContent = cartCount;
@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 7. FEATURE 1: SCROLL-DRIVEN REVEAL ENGINE
+  // 7. SCROLL-DRIVEN REVEAL ENGINE
   // =========================================================================
   function initScrollReveal() {
     const targets = document.querySelectorAll(
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 8. FEATURE 5: 3D CARD PERSPECTIVE TILT
+  // 8. 3D CARD PERSPECTIVE TILT
   // =========================================================================
   function init3DCardTilt() {
     if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 10. FEATURE 7: 1-ROW (4 ITEMS) STEPPER
+  // 10. 1-ROW (4 ITEMS) STEPPER
   // =========================================================================
   function renderArrivals(products, animateNewRow = false) {
     if (!featuredGrid) return;
@@ -332,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const isNewRowItem = animateNewRow && idx >= (currentVisibleCount - ITEMS_PER_ROW);
       const mainImg = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
       const altImg = p.images?.[1] || mainImg;
-      const sizes = Array.isArray(p.sizes) ? p.sizes : ['Standard'];
 
       return `
         <article class="arrival-card ${isNewRowItem ? 'arrival-card--animate-in' : ''}" data-id="${p.id}">
@@ -351,9 +350,12 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <div class="arrival-card__quick">
-              ${sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
-              <button class="size-tag-btn qa-open-btn" data-id="${p.id}" style="background:var(--primary-gold); color:#fff; border-color:var(--primary-gold)">+</button>
+            <!-- Unified Luxury Quick Add Action Bar -->
+            <div class="arrival-card__quick-bar">
+              <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                <span>${lang === 'ar' ? 'إضافة سريعة' : 'Quick Add'}</span>
+              </button>
             </div>
           </div>
 
@@ -443,7 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const discount = onSale ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0;
       const mainImg = p.images?.[0] || p.image || 'assets/images/placeholder.jpg';
       const altImg = p.images?.[1] || mainImg;
-      const sizes = Array.isArray(p.sizes) ? p.sizes : ['Standard'];
 
       return `
         <article class="arrival-card" data-id="${p.id}">
@@ -462,9 +463,12 @@ document.addEventListener('DOMContentLoaded', () => {
               ${altImg !== mainImg ? `<img src="${altImg}" alt="${title}" class="arrival-card__img arrival-card__img--alt" loading="lazy">` : ''}
             </a>
 
-            <div class="arrival-card__quick">
-              ${sizes.map(s => `<button class="size-tag-btn" data-size="${s}" data-id="${p.id}">${s}</button>`).join('')}
-              <button class="size-tag-btn qa-open-btn" data-id="${p.id}" style="background:var(--primary-gold); color:#fff; border-color:var(--primary-gold)">+</button>
+            <!-- Unified Luxury Quick Add Action Bar -->
+            <div class="arrival-card__quick-bar">
+              <button type="button" class="qa-bar-btn qa-open-btn" data-id="${p.id}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                <span>${lang === 'ar' ? 'إضافة سريعة' : 'Quick Add'}</span>
+              </button>
             </div>
           </div>
 
@@ -514,29 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // 1-Tap Quick Size Add
-    document.querySelectorAll('.size-tag-btn:not(.qa-open-btn)').forEach(btn => {
-      btn.onclick = (e) => {
-        const id = e.currentTarget.dataset.id;
-        const size = e.currentTarget.dataset.size;
-        const prod = productCache.find(p => p.id === id);
-        const color = prod?.colors?.[0]?.name || 'Standard';
-
-        let cart = JSON.parse(localStorage.getItem('bm_cart') || '[]');
-        const found = cart.find(i => i.id === id && i.size === size && i.color === color);
-        if (found) {
-          found.qty = (parseInt(found.qty, 10) || 1) + 1;
-        } else {
-          cart.push({ id, size, color, qty: 1 });
-        }
-
-        localStorage.setItem('bm_cart', JSON.stringify(cart));
-        window.dispatchEvent(new Event('bm_cart_updated'));
-        window.syncGlobalBadges();
-        window.openCartDrawer();
-      };
-    });
-
     // Quick Add Modal Trigger
     document.querySelectorAll('.qa-open-btn').forEach(btn => {
       btn.onclick = (e) => {
@@ -572,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   document.addEventListener('click', (e) => {
-    const bagTrigger = e.target.closest('#headerCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
+    const bagTrigger = e.target.closest('#headerCartBtn, #dockCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
     if (bagTrigger) {
       const isCartOrCheckout = window.location.pathname.includes('cart.html') || window.location.pathname.includes('checkout.html');
       if (!isCartOrCheckout) {
