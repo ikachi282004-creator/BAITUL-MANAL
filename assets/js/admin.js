@@ -1,143 +1,204 @@
-/**
- * BAITUL MANAL — Admin & Operations Controller (admin.js)
- * Live SQLite Backend Connection with Graceful Fallback
- */
+document.addEventListener('DOMContentLoaded', () => {
+  // Use your live Render Web Service URL
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://your-render-backend-name.onrender.com'; // Replace with your Render backend URL
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const DEFAULT_PIN = '9650'; // Boutique Security PIN
   let catalog = [];
   let ordersList = [];
 
   const gateCard = document.getElementById('gateCard');
   const dashboardView = document.getElementById('dashboardView');
-  const pinInput = document.getElementById('pinInput');
-  const pinSubmitBtn = document.getElementById('pinSubmitBtn');
+  const adminPasswordInput = document.getElementById('adminPassword');
+  const loginBtn = document.getElementById('loginBtn');
   const gateError = document.getElementById('gateError');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // Check Existing Session
-  if (sessionStorage.getItem('bm_admin_auth') === 'true') {
+  // Check saved token
+  const token = localStorage.getItem('bm_admin_token');
+  if (token) {
     unlockPortal();
   }
 
-  pinSubmitBtn?.addEventListener('click', () => {
-    if (pinInput.value === DEFAULT_PIN) {
-      sessionStorage.setItem('bm_admin_auth', 'true');
-      unlockPortal();
-    } else {
-      gateError.textContent = 'Invalid security PIN. Please try again.';
-      pinInput.value = '';
+  loginBtn.addEventListener('click', async () => {
+    const password = adminPasswordInput.value.trim();
+    if (!password) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.setItem('bm_admin_token', data.token);
+        unlockPortal();
+      } else {
+        gateError.textContent = data.message || 'Incorrect password.';
+      }
+    } catch (e) {
+      gateError.textContent = 'Failed to connect to backend server.';
     }
   });
 
-  logoutBtn?.addEventListener('click', () => {
-    sessionStorage.removeItem('bm_admin_auth');
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('bm_admin_token');
     location.reload();
   });
 
   async function unlockPortal() {
     gateCard.style.display = 'none';
     dashboardView.style.display = 'block';
-    if (logoutBtn) logoutBtn.style.display = 'block';
-
-    // 1. Fetch live catalog
-    try {
-      const res = await fetch('assets/data/products.json');
-      if (res.ok) catalog = await res.json();
-    } catch (e) {
-      console.warn('Catalog offline fallback', e);
-    }
-
-    // 2. Fetch live orders from SQLite backend
-    try {
-      const ordersRes = await fetch('https://baitul-manal-1.onrender.com');
-      if (ordersRes.ok) {
-        ordersList = await ordersRes.json();
-      } else {
-        throw new Error('Server returned non-200 status');
-      }
-    } catch (e) {
-      console.warn('Backend server unreachable, falling back to local snapshot:', e);
-      const fallback = localStorage.getItem('bm_last_order');
-      if (fallback) {
-        try {
-          ordersList = [JSON.parse(fallback)];
-        } catch (err) {}
-      }
-    }
-
-    renderDashboard();
+    await Promise.all([loadOrders(), loadCatalog()]);
   }
 
-  function renderDashboard() {
-    // 1. Calculate Summary Metrics
-    const totalOrders = ordersList.length;
-    const grossSales = ordersList.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-
-    const metricOrders = document.getElementById('metricTotalOrders');
-    const metricSales = document.getElementById('metricGrossSales');
-    const metricCatalog = document.getElementById('metricCatalogCount');
-
-    if (metricOrders) metricOrders.textContent = totalOrders;
-    if (metricSales) metricSales.textContent = `KD ${grossSales.toFixed(3)}`;
-    if (metricCatalog) metricCatalog.textContent = catalog.length;
-
-    // 2. Render Live Orders Table
-    const ordersBody = document.getElementById('ordersTableBody');
-    if (ordersBody) {
-      if (ordersList.length === 0) {
-        ordersBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#8c8173; padding:2.5rem;">No customer dispatches logged yet.</td></tr>`;
-      } else {
-        ordersBody.innerHTML = ordersList.map((o) => {
-          const itemsSummary = Array.isArray(o.items)
-            ? o.items.map(i => `${i.name || i.id} (${i.size || 'M'}) x${i.qty}`).join('<br>')
-            : '—';
-
-          return `
-            <tr>
-              <td><strong>${o.orderId}</strong><br><small style="color:#8c8173;">${o.date || ''}</small></td>
-              <td>${o.recipient?.name || 'Guest'}<br><small style="color:#8c8173;">${o.recipient?.phone || ''}</small></td>
-              <td>${o.recipient?.governorate || 'Al Ahmadi'}<br><small style="color:#8c8173;">${o.recipient?.address || ''}</small></td>
-              <td><span class="status-badge status-badge--knet">${o.paymentMethod || 'K-Net'}</span></td>
-              <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
-              <td><span class="status-badge status-badge--pending">${o.status || 'Pending'}</span></td>
-              <td>
-                <button type="button" class="btn-action" onclick="alert('Dispatch confirmed for ${o.orderId}. Logistics notified.')">Mark Shipped</button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-    }
-
-    // 3. Render Catalog Inventory Grid
-    const invBody = document.getElementById('inventoryTableBody');
-    if (invBody) {
-      invBody.innerHTML = catalog.map(p => `
-        <tr>
-          <td><strong>${p.sku || p.id}</strong></td>
-          <td>${p.name?.en || 'Silhouette Piece'}</td>
-          <td><span style="text-transform:uppercase; font-size:0.75rem; color:#8c8173;">${p.category}</span></td>
-          <td>KD ${(p.price || 0).toFixed(3)}</td>
-          <td>${p.salePrice ? `<span style="color:#b33939; font-weight:700;">KD ${p.salePrice.toFixed(3)}</span>` : '—'}</td>
-          <td>${(p.sizes || []).join(', ')}</td>
-        </tr>
-      `).join('');
+  // Fetch Orders
+  async function loadOrders() {
+    try {
+      const res = await fetch(`${API_BASE}/api/orders`);
+      ordersList = await res.json();
+      renderOrders();
+    } catch (e) {
+      console.warn('Orders fetch error:', e);
     }
   }
 
-  // Navigation Tabs Switching
+  function renderOrders() {
+    const tbody = document.getElementById('ordersTableBody');
+    if (!ordersList.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#777;">No customer orders found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = ordersList.map(o => `
+      <tr>
+        <td><strong>${o.orderId}</strong><br><small style="color:#888;">${o.date || ''}</small></td>
+        <td>${o.recipient?.name || 'Guest'}<br><small style="color:#888;">${o.recipient?.phone || ''}</small></td>
+        <td>${o.recipient?.governorate || ''}<br><small style="color:#888;">${o.recipient?.address || ''}</small></td>
+        <td>${o.paymentMethod || 'K-Net'}</td>
+        <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
+        <td><span style="color:#c5a880;">${o.status || 'Pending'}</span></td>
+        <td><button class="btn" style="padding:4px 8px; font-size:12px;" onclick="alert('Dispatch confirmed for ${o.orderId}')">Ship</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // Fetch Products
+  async function loadCatalog() {
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products`);
+      catalog = await res.json();
+      renderInventoryTable();
+      renderRawJson();
+    } catch (e) {
+      console.error('Catalog fetch error:', e);
+    }
+  }
+
+  function renderInventoryTable() {
+    const tbody = document.getElementById('inventoryTableBody');
+    tbody.innerHTML = catalog.map((p, index) => `
+      <tr data-index="${index}">
+        <td><input type="text" value="${p.sku || p.id}" class="row-sku"></td>
+        <td><input type="text" value="${p.name?.en || p.name || ''}" class="row-name"></td>
+        <td><input type="text" value="${p.category || ''}" class="row-cat"></td>
+        <td><input type="number" step="0.001" value="${p.price || 0}" class="row-price"></td>
+        <td><input type="number" step="0.001" value="${p.salePrice || ''}" class="row-saleprice"></td>
+        <td><input type="text" value="${(p.sizes || []).join(', ')}" class="row-sizes"></td>
+        <td><button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteProduct('${p.id || p.sku}')">✕</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function renderRawJson() {
+    const textarea = document.getElementById('rawJsonTextarea');
+    textarea.value = JSON.stringify(catalog, null, 2);
+  }
+
+  // Save Inline Changes
+  document.getElementById('saveInlineChangesBtn').addEventListener('click', async () => {
+    const rows = document.querySelectorAll('#inventoryTableBody tr');
+    rows.forEach(row => {
+      const idx = row.dataset.index;
+      if (catalog[idx]) {
+        catalog[idx].sku = row.querySelector('.row-sku').value;
+        if (typeof catalog[idx].name === 'object') {
+          catalog[idx].name.en = row.querySelector('.row-name').value;
+        } else {
+          catalog[idx].name = row.querySelector('.row-name').value;
+        }
+        catalog[idx].category = row.querySelector('.row-cat').value;
+        catalog[idx].price = parseFloat(row.querySelector('.row-price').value) || 0;
+        const saleVal = row.querySelector('.row-saleprice').value;
+        catalog[idx].salePrice = saleVal ? parseFloat(saleVal) : null;
+        catalog[idx].sizes = row.querySelector('.row-sizes').value.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    });
+
+    await syncRawJson(catalog);
+  });
+
+  // Save Raw JSON Editor
+  document.getElementById('saveRawJsonBtn').addEventListener('click', async () => {
+    const status = document.getElementById('jsonStatus');
+    const rawVal = document.getElementById('rawJsonTextarea').value;
+    try {
+      const parsed = JSON.parse(rawVal);
+      await syncRawJson(parsed);
+      status.style.color = '#2ecc71';
+      status.textContent = '✓ Saved successfully!';
+      setTimeout(() => status.textContent = '', 3000);
+    } catch (err) {
+      status.style.color = '#ff5252';
+      status.textContent = '✕ Invalid JSON syntax. Please verify commas, brackets, and quotes.';
+    }
+  });
+
+  async function syncRawJson(data) {
+    const authToken = localStorage.getItem('bm_admin_token');
+    const res = await fetch(`${API_BASE}/api/admin/products/raw`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      catalog = data;
+      renderInventoryTable();
+      renderRawJson();
+      alert('Inventory saved successfully!');
+    } else {
+      alert('Failed to save inventory updates. Check permissions.');
+    }
+  }
+
+  window.deleteProduct = async (id) => {
+    if (!confirm(`Are you sure you want to delete item ${id}?`)) return;
+    const authToken = localStorage.getItem('bm_admin_token');
+    const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (res.ok) {
+      loadCatalog();
+    }
+  };
+
+  // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      const target = btn.dataset.tab;
-      const paneOrders = document.getElementById('paneOrders');
-      const paneInventory = document.getElementById('paneInventory');
-
-      if (paneOrders) paneOrders.style.display = target === 'orders' ? 'block' : 'none';
-      if (paneInventory) paneInventory.style.display = target === 'inventory' ? 'block' : 'none';
+      const tab = btn.dataset.tab;
+      document.getElementById('paneOrders').style.display = tab === 'orders' ? 'block' : 'none';
+      document.getElementById('paneInventory').style.display = tab === 'inventory' ? 'block' : 'none';
+      document.getElementById('paneRawJson').style.display = tab === 'raw-json' ? 'block' : 'none';
     });
   });
+
+  document.getElementById('refreshOrdersBtn')?.addEventListener('click', loadOrders);
 });
