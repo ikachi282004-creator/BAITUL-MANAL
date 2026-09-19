@@ -7622,3 +7622,30 @@ a[href^="tel:"],
     height: 12px;
   }
 }
+/* =========================================================================
+   CLEAN MOBILE HEADER: Hide Account Icon & Streamline Spacing
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Hide the account profile icon/link specifically in the top header on mobile */
+  .header__actions a[href*="my-profile"],
+  .header__actions a[href*="profile"],
+  .header-account-btn,
+  .site-header__account {
+    display: none !important;
+  }
+
+  /* Optimize header spacing to feel airy and clear */
+  .site-header__inner,
+  .sanctuary-header__inner,
+  .header__inner {
+    padding: 12px 16px !important;
+    gap: 12px;
+  }
+
+  /* Make logo well-centered and balanced */
+  .site-logo,
+  .sanctuary-logo {
+    font-size: 1.25rem !important;
+    letter-spacing: 1.2px !important;
+  }
+}
