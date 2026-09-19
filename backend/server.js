@@ -134,6 +134,16 @@ app.get('/api/orders', (req, res) => {
     res.json(formatted);
   });
 });
+// Add right before app.listen()
+app.get('/', (req, res) => {
+  res.send(`
+    <div style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+      <h1>✨ Baitul Manal API is Live</h1>
+      <p>Node.js & SQLite Backend Active</p>
+      <p><a href="/api/health">Check Health</a> | <a href="/api/orders">View Orders</a></p>
+    </div>
+  `);
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server listening at http://localhost:${PORT}`);
