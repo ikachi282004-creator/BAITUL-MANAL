@@ -297,28 +297,42 @@ app.post('/api/orders', (req, res) => {
 });
 
 // Update Order Dispatch Status (Stage Confirmation Engine)
+// Update Order Dispatch Status (Locked once CANCELLED)
 app.patch('/api/orders/:id/status', (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
   const validStatuses = ['PENDING_DISPATCH', 'PROCESSING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: 'Invalid order status stage' });
+    return res.status(400).json({ error: 'Invalid order status stage.' });
   }
 
-  const sql = `UPDATE orders SET fulfillment_status = ? WHERE order_id = ? OR id = ?`;
-  db.run(sql, [status, id, id], function (err) {
-    if (err) {
-      console.error('Failed to update order status:', err.message);
-      return res.status(500).json({ error: 'Database update failed' });
+  // Check current order status in SQLite first
+  db.get('SELECT fulfillment_status FROM orders WHERE order_id = ? OR id = ?', [id, id], (checkErr, currentOrder) => {
+    if (checkErr) {
+      return res.status(500).json({ error: 'Database verification failed.' });
+    }
+    if (!currentOrder) {
+      return res.status(404).json({ error: 'Order reference not found.' });
     }
 
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Order reference not found' });
+    // STRICT LOCK: Once an order is CANCELLED, it can NEVER be modified
+    if (currentOrder.fulfillment_status === 'CANCELLED') {
+      return res.status(403).json({ 
+        error: 'Forbidden: This order was cancelled by the customer/system and is permanently locked.' 
+      });
     }
 
-    console.log(`🚚 Status Updated: Order ${id} -> ${status}`);
-    res.json({ success: true, orderId: id, status });
+    const sql = `UPDATE orders SET fulfillment_status = ? WHERE order_id = ? OR id = ?`;
+    db.run(sql, [status, id, id], function (updateErr) {
+      if (updateErr) {
+        console.error('Failed to update order status:', updateErr.message);
+        return res.status(500).json({ error: 'Database update failed.' });
+      }
+
+      console.log(`🚚 Status Updated: Order ${id} -> ${status}`);
+      res.json({ success: true, orderId: id, status });
+    });
   });
 });
 

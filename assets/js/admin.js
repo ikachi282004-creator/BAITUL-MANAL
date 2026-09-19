@@ -352,13 +352,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
           <td>
             <!-- Interactive Stage Selector -->
-            <select class="admin-status-dropdown" data-order-id="${o.orderId}" style="background: #181512; color: #c5a880; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; outline: none;">
-              <option value="PENDING_DISPATCH" ${o.status === 'PENDING_DISPATCH' ? 'selected' : ''}>🟡 Pending Dispatch</option>
-              <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>🟠 Atelier Tailoring</option>
-              <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>🔵 Out for Delivery</option>
-              <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>🟢 Delivered</option>
-              <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
-            </select>
+            ${o.status === 'CANCELLED' ? `
+  <div style="display:inline-flex; align-items:center; gap:6px; background: rgba(231,76,60,0.15); border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 12px; border-radius: 4px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">
+    <span>🔒 Cancelled (Locked)</span>
+  </div>
+` : `
+  <select class="admin-status-dropdown" data-order-id="${o.orderId}" style="background: #181512; color: #c5a880; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; outline: none;">
+    <option value="PENDING_DISPATCH" ${o.status === 'PENDING_DISPATCH' ? 'selected' : ''}>🟡 Pending Dispatch</option>
+    <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>🟠 Atelier Tailoring</option>
+    <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>🔵 Out for Delivery</option>
+    <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>🟢 Delivered</option>
+    <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
+  </select>
+`}
           </td>
         </tr>
       `).join('');
