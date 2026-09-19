@@ -1,5 +1,6 @@
 /**
  * BAITUL MANAL — Order Success Receipt Controller (order-success.js)
+ * Itemized Invoice Ledger, Address Sanitizer & Support Syncer
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let order = null;
 
-  // 1. Check local session cache first
+  // 1. Session Storage cache check
   const cachedOrderRaw = localStorage.getItem('bm_last_order');
   if (cachedOrderRaw) {
     try {
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch {}
   }
 
-  // 2. Fetch fresh order if not in cache or if missing fields
+  // 2. Fetch fresh order if missing from session
   if (!order && orderId) {
     try {
       const res = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}?t=${Date.now()}`);
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // 3. Fallback catalog for price resolution if needed
+  // 3. Fallback catalog for product resolution
   let catalog = [];
   try {
     const catRes = await fetch(`${API_BASE}/api/admin/products?t=${Date.now()}`);
@@ -48,67 +49,85 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!order) return;
 
-  // Populate Customer & Ledger Details
-  const recipientName = order.recipient?.name || 'Customer';
-  const phone = order.recipient?.phone || '';
-  const address = order.recipient?.address || order.deliveryArea || 'Kuwait';
-  const payment = order.paymentMethod || 'COD';
-  const grandTotal = Number(order.total || order.grand_total || 0);
+  // Compute Itemized Totals
+  const rawItems = Array.isArray(order.items) ? order.items : [];
+  let calculatedSubtotal = 0;
 
-  const recipientEl = document.getElementById('orderRecipient');
-  const phoneEl = document.getElementById('orderPhone');
-  const addressEl = document.getElementById('orderAddress');
-  const paymentEl = document.getElementById('orderPayment');
-  const totalEl = document.getElementById('orderTotalDisplay');
-  const trackBtn = document.getElementById('trackOrderBtn');
-
-  if (recipientEl) recipientEl.textContent = recipientName;
-  if (phoneEl) phoneEl.textContent = phone;
-  if (addressEl) addressEl.textContent = address;
-  if (paymentEl) paymentEl.textContent = payment;
-  if (totalEl) totalEl.textContent = `KD ${grandTotal.toFixed(3)}`;
-  if (trackBtn) trackBtn.href = `track-order.html?id=${orderRef}`;
-
-  // Render Items with Accurate Pricing
   const itemsContainer = document.getElementById('orderItemsSummary');
   if (itemsContainer) {
-    const rawItems = Array.isArray(order.items) ? order.items : [];
-    
     itemsContainer.innerHTML = rawItems.map(item => {
       const matchedProd = catalog.find(p => String(p.id) === String(item.id) || String(p.sku) === String(item.id));
       const title = item.name || matchedProd?.name?.en || (typeof matchedProd?.name === 'string' ? matchedProd.name : item.id);
       const qty = parseInt(item.qty, 10) || 1;
 
-      // Extract price from lineTotal -> unitPrice -> price -> catalog match
-      let computedLineTotal = 0;
+      let linePrice = 0;
       if (item.lineTotal !== undefined && Number(item.lineTotal) > 0) {
-        computedLineTotal = Number(item.lineTotal);
+        linePrice = Number(item.lineTotal);
       } else if (item.unitPrice !== undefined && Number(item.unitPrice) > 0) {
-        computedLineTotal = Number(item.unitPrice) * qty;
+        linePrice = Number(item.unitPrice) * qty;
       } else if (item.price !== undefined && Number(item.price) > 0) {
-        computedLineTotal = Number(item.price) * qty;
+        linePrice = Number(item.price) * qty;
       } else if (matchedProd) {
         const prodPrice = matchedProd.salePrice ? Number(matchedProd.salePrice) : Number(matchedProd.price || 0);
-        computedLineTotal = prodPrice * qty;
+        linePrice = prodPrice * qty;
       }
 
+      calculatedSubtotal += linePrice;
+
       return `
-        <div class="success-item-row" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f2ede4; font-size: 0.9rem;">
+        <div class="success-item-row">
           <div>
             <strong style="color: #181512; display: block;">${title}</strong>
-            <span style="font-size: 0.78rem; color: #8c8173;">Size: ${item.size || 'M'} • Color: ${item.color || 'Standard'} • Qty: ${qty}</span>
+            <div class="success-item-meta">Size: ${item.size || 'M'} • Color: ${item.color || 'Standard'} • Qty: ${qty}</div>
           </div>
-          <strong style="color: #181512; font-size: 0.95rem;">KD ${computedLineTotal.toFixed(3)}</strong>
+          <strong style="color: #181512;">KD ${linePrice.toFixed(3)}</strong>
         </div>
       `;
     }).join('');
   }
 
-  // Direct WhatsApp Concierge Link
+  // Invoice Ledger Elements
+  const grandTotal = Number(order.total || order.grand_total || 0);
+  const explicitSubtotal = Number(order.subtotal || calculatedSubtotal);
+  const deliveryFee = Number(order.deliveryFee !== undefined ? order.deliveryFee : (grandTotal - explicitSubtotal));
+
+  const invoiceSubtotalEl = document.getElementById('invoiceSubtotal');
+  const invoiceDeliveryEl = document.getElementById('invoiceDelivery');
+  const orderTotalDisplayEl = document.getElementById('orderTotalDisplay');
+
+  if (invoiceSubtotalEl) invoiceSubtotalEl.textContent = `KD ${explicitSubtotal.toFixed(3)}`;
+  if (invoiceDeliveryEl) {
+    if (deliveryFee <= 0) {
+      invoiceDeliveryEl.textContent = 'KD 0.000 (FREE)';
+      invoiceDeliveryEl.style.color = '#27ae60';
+    } else {
+      invoiceDeliveryEl.textContent = `KD ${deliveryFee.toFixed(3)}`;
+    }
+  }
+  if (orderTotalDisplayEl) orderTotalDisplayEl.textContent = `KD ${grandTotal.toFixed(3)}`;
+
+  // Clean Address Formatter
+  let cleanAddress = order.recipient?.address || order.deliveryArea || 'Kuwait';
+  cleanAddress = cleanAddress.replace(/Gov:\s*[^,]+,\s*/i, ''); // Strip redundant internal tags
+
+  // Populate Snapshot
+  const recipientEl = document.getElementById('orderRecipient');
+  const phoneEl = document.getElementById('orderPhone');
+  const addressEl = document.getElementById('orderAddress');
+  const paymentEl = document.getElementById('orderPayment');
+  const trackBtn = document.getElementById('trackOrderBtn');
+
+  if (recipientEl) recipientEl.textContent = order.recipient?.name || 'Customer';
+  if (phoneEl) phoneEl.textContent = `🇰🇼 ${order.recipient?.phone || ''}`;
+  if (addressEl) addressEl.textContent = cleanAddress;
+  if (paymentEl) paymentEl.textContent = order.paymentMethod || 'Cash on Delivery (COD)';
+  if (trackBtn) trackBtn.href = `track-order.html?id=${orderRef}`;
+
+  // Direct Concierge WhatsApp Link
   const waBtn = document.getElementById('orderWhatsAppSupport');
   if (waBtn) {
     const msg = encodeURIComponent(
-      `Salam Baitul Manal! I placed Order #${orderRef} for KD ${grandTotal.toFixed(3)}. Can you confirm dispatch to ${address}?`
+      `Salam Baitul Manal! I placed Order #${orderRef}.\n\nItems: KD ${explicitSubtotal.toFixed(3)}\nDelivery: KD ${deliveryFee.toFixed(3)}\nTotal Paid: KD ${grandTotal.toFixed(3)}\n\nDestination: ${cleanAddress}`
     );
     waBtn.href = `https://wa.me/96560454629?text=${msg}`;
   }

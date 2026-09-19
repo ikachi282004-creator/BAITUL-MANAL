@@ -13,27 +13,38 @@
   <link rel="stylesheet" href="assets/css/base.css" />
   <link rel="stylesheet" href="assets/css/components.css" />
   <style>
+    :root {
+      --bm-gold: #c5a880;
+      --bm-gold-dark: #9e825a;
+      --bm-dark: #181512;
+      --bm-card-bg: #ffffff;
+      --bm-border: #e8e2d8;
+      --bm-green: #27ae60;
+    }
+
     body {
       background-color: #faf8f5;
       font-family: 'Outfit', sans-serif;
-      color: #181512;
+      color: var(--bm-dark);
       margin: 0;
       padding: 0;
     }
+
     .success-wrapper {
-      max-width: 620px;
-      margin: 2.5rem auto 4rem;
+      max-width: 650px;
+      margin: 2.5rem auto 4.5rem;
       padding: 0 16px;
     }
+
     .success-card {
-      background: #ffffff;
+      background: var(--bm-card-bg);
       border-radius: 12px;
-      border: 1px solid rgba(214, 203, 186, 0.6);
-      padding: 2.5rem 2rem;
+      border: 1px solid var(--bm-border);
+      padding: 2.5rem 2.2rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-      text-align: center;
     }
-    @media (max-width: 480px) {
+
+    @media (max-width: 520px) {
       .success-wrapper {
         margin: 1.5rem auto 3rem;
         padding: 0 12px;
@@ -42,107 +53,167 @@
         padding: 1.8rem 1.25rem;
       }
     }
+
     .success-badge {
-      width: 68px;
-      height: 68px;
+      width: 64px;
+      height: 64px;
       margin: 0 auto 1.25rem;
       background: rgba(39, 174, 96, 0.1);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #27ae60;
+      color: var(--bm-green);
     }
+
     .success-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 1.75rem;
+      font-size: 1.85rem;
       font-weight: 700;
       margin: 0 0 0.5rem;
-      color: #181512;
+      color: var(--bm-dark);
+      text-align: center;
     }
+
     .success-sub {
       color: #70685f;
       font-size: 0.92rem;
       line-height: 1.5;
       margin: 0 0 1.75rem;
+      text-align: center;
     }
+
+    .order-tag-wrap {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
     .order-tag {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       background: #f7f5f2;
       border: 1px solid #d6cbba;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 8px 18px;
+      border-radius: 30px;
       font-weight: 700;
       font-size: 0.88rem;
       letter-spacing: 0.5px;
+    }
+
+    .section-headline {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: #8c8173;
+      margin: 0 0 12px;
+    }
+
+    /* Items Box */
+    .items-purchased-box {
+      margin-bottom: 1.75rem;
+    }
+
+    .success-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #f2ede4;
+      font-size: 0.92rem;
+    }
+
+    .success-item-meta {
+      font-size: 0.8rem;
+      color: #8c8173;
+      margin-top: 3px;
+    }
+
+    /* Transparent Financial Breakdown Ledger */
+    .billing-ledger {
+      background: #faf8f5;
+      border-radius: 8px;
+      border: 1px solid #ece6dc;
+      padding: 16px;
+      margin-bottom: 1.75rem;
+    }
+
+    .ledger-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      margin-bottom: 9px;
+      color: #5a5146;
+    }
+
+    .ledger-line strong {
+      color: var(--bm-dark);
+    }
+
+    .ledger-line.grand-total-line {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0d7cb;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--bm-dark);
+      margin-bottom: 0;
+    }
+
+    /* Recipient Snapshot Box */
+    .recipient-snapshot {
+      border-top: 1px dashed #d6cbba;
+      border-bottom: 1px dashed #d6cbba;
+      padding: 16px 0;
       margin-bottom: 2rem;
     }
-    .receipt-ledger {
-      text-align: left;
-      border-top: 1px dashed rgba(214, 203, 186, 0.8);
-      border-bottom: 1px dashed rgba(214, 203, 186, 0.8);
-      padding: 1.25rem 0;
-      margin-bottom: 2rem;
-    }
-    .receipt-row {
+
+    .snapshot-row {
       display: flex;
       justify-content: space-between;
       font-size: 0.88rem;
       margin-bottom: 8px;
       color: #5a5146;
     }
-    .receipt-row strong {
-      color: #181512;
+
+    .snapshot-row:last-child {
+      margin-bottom: 0;
     }
-    .receipt-row.total-row {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: #181512;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #eee;
+
+    .snapshot-row strong {
+      color: var(--bm-dark);
+      text-align: right;
+      max-width: 62%;
+      word-break: break-word;
     }
-    .items-purchased-box {
-      text-align: left;
-      margin-bottom: 2rem;
-    }
-    .items-purchased-box h4 {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #8c8173;
-      margin: 0 0 10px;
-    }
-    .success-item-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.88rem;
-      padding: 6px 0;
-      border-bottom: 1px solid #faf8f5;
-    }
+
+    /* Actions */
     .btn-action-primary {
       display: block;
       width: 100%;
-      background: #181512;
+      background: var(--bm-dark);
       color: #ffffff !important;
+      text-align: center;
       text-decoration: none;
       padding: 14px 20px;
       border-radius: 6px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       margin-bottom: 10px;
+      box-sizing: border-box;
       transition: background 0.2s;
     }
+
     .btn-action-primary:hover {
       background: #332d27;
     }
+
     .btn-action-outline {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       width: 100%;
       background: #25d366;
       color: #ffffff !important;
@@ -151,13 +222,14 @@
       border-radius: 6px;
       font-weight: 600;
       font-size: 0.9rem;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
 
   <header style="padding: 1.25rem 0; text-align: center; border-bottom: 1px solid rgba(214,203,186,0.3); background: #ffffff;">
-    <a href="index.html" style="font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: #181512; text-decoration: none; letter-spacing: 1px;">
+    <a href="index.html" style="font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: #181512; text-decoration: none; letter-spacing: 1px;">
       BAITUL MANAL
     </a>
   </header>
@@ -165,47 +237,68 @@
   <main class="success-wrapper">
     <div class="success-card">
       <div class="success-badge">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
 
       <h1 class="success-title">Thank You For Your Order</h1>
-      <p class="success-sub">Your couture order has been placed into our atelier dispatch queue. A confirmation has been logged with customer support.</p>
+      <p class="success-sub">Your couture order has been placed into our atelier dispatch queue. A confirmation receipt is generated below.</p>
 
-      <div class="order-tag">
-        <span>Order Reference:</span>
-        <strong id="orderRefDisplay">Loading...</strong>
+      <div class="order-tag-wrap">
+        <div class="order-tag">
+          <span>Order Reference:</span>
+          <strong id="orderRefDisplay">Loading...</strong>
+        </div>
       </div>
 
+      <!-- Garments -->
       <div class="items-purchased-box">
-        <h4>Purchased Garments</h4>
+        <h4 class="section-headline">Purchased Garments</h4>
         <div id="orderItemsSummary"></div>
       </div>
 
-      <div class="receipt-ledger">
-        <div class="receipt-row">
-          <span>Recipient</span>
-          <strong id="orderRecipient">...</strong>
+      <!-- Itemized Financial Breakdown -->
+      <div class="billing-ledger">
+        <div class="ledger-line">
+          <span>Garments Subtotal</span>
+          <strong id="invoiceSubtotal">KD 0.000</strong>
         </div>
-        <div class="receipt-row">
-          <span>Contact Number</span>
-          <strong id="orderPhone">...</strong>
+        <div class="ledger-line">
+          <span>Kuwait Courier Dispatch</span>
+          <strong id="invoiceDelivery">KD 0.000</strong>
         </div>
-        <div class="receipt-row">
-          <span>Delivery Address</span>
-          <strong id="orderAddress" style="max-width: 60%; text-align: right; word-break: break-word;">...</strong>
+        <div class="ledger-line" id="invoiceDiscountRow" style="display: none; color: var(--bm-green);">
+          <span>Privilege Voucher Discount</span>
+          <strong id="invoiceDiscount">-KD 0.000</strong>
         </div>
-        <div class="receipt-row">
-          <span>Payment Gateway</span>
-          <strong id="orderPayment">K-Net Local Debit</strong>
-        </div>
-        <div class="receipt-row total-row">
-          <span>Total Paid</span>
-          <span id="orderTotalDisplay">KD 0.000</span>
+        <div class="ledger-line grand-total-line">
+          <span>Total Payable Amount</span>
+          <span id="orderTotalDisplay" style="color: var(--bm-dark);">KD 0.000</span>
         </div>
       </div>
 
+      <!-- Delivery Snapshot -->
+      <div class="recipient-snapshot">
+        <div class="snapshot-row">
+          <span>Recipient</span>
+          <strong id="orderRecipient">...</strong>
+        </div>
+        <div class="snapshot-row">
+          <span>Contact Mobile</span>
+          <strong id="orderPhone">...</strong>
+        </div>
+        <div class="snapshot-row">
+          <span>Destination</span>
+          <strong id="orderAddress">...</strong>
+        </div>
+        <div class="snapshot-row">
+          <span>Payment Gateway</span>
+          <strong id="orderPayment">Cash on Delivery (COD)</strong>
+        </div>
+      </div>
+
+      <!-- Navigation CTAs -->
       <a href="track-order.html" id="trackOrderBtn" class="btn-action-primary">
         <span>Track Live Parcel Status →</span>
       </a>
@@ -215,8 +308,8 @@
         <span>Send Order Copy to WhatsApp</span>
       </a>
 
-      <div style="margin-top: 1.5rem;">
-        <a href="index.html" style="font-size: 0.85rem; color: #8c8173; text-decoration: underline;">Return to Boutique Homepage</a>
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="index.html" style="font-size: 0.85rem; color: #8c8173; text-decoration: underline;">Return to Boutique Catalog</a>
       </div>
     </div>
   </main>
