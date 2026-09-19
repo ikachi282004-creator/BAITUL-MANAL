@@ -1,6 +1,6 @@
 /**
  * BAITUL MANAL — Master Product Detail Controller (product.js)
- * Clean, Robust, High-Performance Controller
+ * Live Backend Sync, Robust Cache-Busting & Static Fallback
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   let selectedSize = 'Standard';
   let selectedColor = 'Original';
   let quantity = 1;
+
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://baitul-manal-1.onrender.com';
+
+  const STATIC_FALLBACK = 'assets/data/products.json';
 
   // Resolve Product ID from URL (?id=BM-W-02)
   const urlParams = new URLSearchParams(window.location.search);
@@ -85,14 +91,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('bm_wishlist_updated', syncBadges);
 
   // =========================================================================
-  // 2. FETCH & DATA HYDRATION
+  // 2. LIVE CATALOG FETCH (NETWORK-FIRST WITH CACHE BUSTING & FALLBACK)
   // =========================================================================
-  try {
-    const res = await fetch('assets/data/products.json');
-    if (!res.ok) throw new Error('Catalog JSON not accessible');
-    allProducts = await res.json();
+  async function fetchLiveCatalog() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    product = allProducts.find(p => String(p.id).toLowerCase() === targetId.toLowerCase());
+    try {
+      const cacheBuster = `?t=${new Date().getTime()}`;
+      const res = await fetch(`${API_BASE}/api/admin/products${cacheBuster}`, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`API returned status ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+      throw new Error('API returned empty catalog payload');
+    } catch (apiErr) {
+      console.warn('[Product] Backend unreachable, reading local fallback...', apiErr.message);
+      const localRes = await fetch(STATIC_FALLBACK);
+      if (!localRes.ok) throw new Error('Local fallback products.json missing');
+      return await localRes.json();
+    }
+  }
+
+  try {
+    allProducts = await fetchLiveCatalog();
+
+    product = allProducts.find(p => String(p.id).toLowerCase() === targetId.toLowerCase() || String(p.sku).toLowerCase() === targetId.toLowerCase());
     if (!product && allProducts.length > 0) {
       product = allProducts[0];
     }
@@ -144,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Images & Filmstrip
     const images = Array.isArray(product.images) && product.images.length
       ? product.images
-      : ['assets/images/placeholder.jpg'];
+      : [product.image || 'assets/images/placeholder.jpg'];
 
     if (heroImage) {
       heroImage.src = images[0];
@@ -470,5 +503,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         </article>
       `;
     }).join('');
+  }
+
+  // =========================================================================
+  // 6. CLEAR STALE SERVICE WORKER CACHE IN NORMAL TABS
+  // =========================================================================
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (const registration of registrations) {
+        registration.update();
+      }
+    });
   }
 });
