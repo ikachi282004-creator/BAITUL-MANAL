@@ -7,10 +7,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let allProducts = [];
   let filteredProducts = [];
 
-  // Backend API URL mapping
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://baitul-manal-1.onrender.com'; // Adjust if your Render Web Service name differs
+    : 'https://baitul-manal-1.onrender.com';
 
   const STATIC_FALLBACK = 'assets/data/products.json';
 
@@ -69,17 +68,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('bm_wishlist_updated', refreshBadges);
 
   // =========================================================================
-  // 2. FETCH CATALOG (NETWORK-FIRST WITH STATIC FALLBACK) & INITIALIZE
+  // 2. FETCH CATALOG (NETWORK-FIRST WITH CACHE BUSTING & STATIC FALLBACK)
   // =========================================================================
   async function fetchLiveCatalog() {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout for sleepy cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     try {
-      // 1. Attempt to fetch live products directly from backend
-      const res = await fetch(`${API_BASE}/api/admin/products`, {
+      const cacheBuster = `?t=${new Date().getTime()}`;
+      const res = await fetch(`${API_BASE}/api/admin/products${cacheBuster}`, {
         signal: controller.signal,
-        headers: { 'Accept': 'application/json' }
+        headers: { 
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
       });
       clearTimeout(timeoutId);
 
@@ -93,7 +95,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (apiErr) {
       console.warn('[Catalog] Backend unreachable or booting up. Loading local fallback...', apiErr.message);
       
-      // 2. Fallback to bundled static JSON file
       const localRes = await fetch(STATIC_FALLBACK);
       if (!localRes.ok) throw new Error('Local fallback products.json missing');
       const localData = await localRes.json();
@@ -105,7 +106,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     allProducts = await fetchLiveCatalog();
 
-    // Parse URL parameters (?category=women, ?category=girls, etc.)
     const urlParams = new URLSearchParams(window.location.search);
     const cat = urlParams.get('category');
     const search = urlParams.get('search') || urlParams.get('q');
@@ -158,10 +158,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function runFiltering() {
     filteredProducts = allProducts.filter(p => {
-      // Category Match
       if (!matchesCategory(p, state.category)) return false;
 
-      // Live Search Query Match
       if (state.searchQuery) {
         const titleEn = (p.name?.en || (typeof p.name === 'string' ? p.name : '')).toLowerCase();
         const titleAr = (p.name?.ar || '').toLowerCase();
@@ -172,11 +170,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // Price Threshold
       const activePrice = p.salePrice || p.price || 0;
       if (activePrice > state.maxPrice) return false;
 
-      // Size Filter
       if (state.selectedSizes.length > 0) {
         const itemSizes = p.sizes || [];
         const hasSize = state.selectedSizes.some(s => itemSizes.includes(s));
@@ -186,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return true;
     });
 
-    // Sort Handler
     switch (state.sortBy) {
       case 'price-asc':
         filteredProducts.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
@@ -198,7 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         filteredProducts.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
         break;
       default:
-        // Handpicked / Featured
         break;
     }
 
@@ -290,7 +284,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 5. INTERACTIVE CARD ACTIONS (DIRECT ADD & WISHLIST)
   // =========================================================================
   function bindCardEvents() {
-    // 1-Tap Quick Size selection directly to Bag
     document.querySelectorAll('.catalog-quick-size-btn').forEach(btn => {
       btn.onclick = (e) => {
         e.preventDefault();
@@ -332,7 +325,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
     });
 
-    // Wishlist Toggle
     document.querySelectorAll('.arrival-card__fav').forEach(btn => {
       btn.onclick = (e) => {
         e.preventDefault();
@@ -367,7 +359,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 6. EVENT LISTENERS SETUP
   // =========================================================================
   function bindFilterEvents() {
-    // 1. Department Top Pills (#deptPills .cat-pill)
     document.querySelectorAll('.cat-pill').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -377,7 +368,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // 2. Sidebar Department Links (#sidebarDeptList .sidebar-dept-btn)
     document.querySelectorAll('.sidebar-dept-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -388,7 +378,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // 3. Size Filter Matrix Chips (#sizeChipsBox .chip-item)
     document.querySelectorAll('.chip-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -406,13 +395,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // 4. Live Search Input
     searchInput?.addEventListener('input', (e) => {
       state.searchQuery = e.target.value.trim();
       runFiltering();
     });
 
-    // 5. Price Spectrum Range Slider
     priceRange?.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
       state.maxPrice = val;
@@ -420,13 +407,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       runFiltering();
     });
 
-    // 6. Sorting Select Dropdown
     sortSelect?.addEventListener('change', (e) => {
       state.sortBy = e.target.value;
       runFiltering();
     });
 
-    // 7. Density Toggles (.density-btn[data-cols])
     document.querySelectorAll('.density-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.density-btn').forEach(b => b.classList.remove('active'));
@@ -440,7 +425,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // 8. Mobile Filter Drawer Open/Close
     openFiltersBtn?.addEventListener('click', () => {
       filtersSidebar?.classList.add('active');
       filterOverlay?.classList.add('active');
@@ -456,7 +440,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeFiltersBtn?.addEventListener('click', closeMobileDrawer);
     filterOverlay?.addEventListener('click', closeMobileDrawer);
 
-    // 9. Reset Button
     resetFiltersBtn?.addEventListener('click', resetAllFilters);
   }
 

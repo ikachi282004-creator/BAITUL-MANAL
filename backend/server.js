@@ -16,6 +16,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'BaitulManal@2026';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// In-Memory Hot Cache
+let memoryCatalog = null;
+
 // Locate products.json across project variations
 function resolveCatalogPath() {
   const potentialPaths = [
@@ -30,30 +33,40 @@ function resolveCatalogPath() {
       return candidate;
     }
   }
-  // Default target path
-  return path.join(__dirname, '../assets/data/products.json');
+  return path.join(__dirname, 'products.json');
 }
 
 const catalogPath = resolveCatalogPath();
 
 function getProductsData() {
+  if (memoryCatalog && Array.isArray(memoryCatalog) && memoryCatalog.length > 0) {
+    return memoryCatalog;
+  }
   try {
     if (fs.existsSync(catalogPath)) {
       const rawCatalog = fs.readFileSync(catalogPath, 'utf8');
-      return JSON.parse(rawCatalog);
+      memoryCatalog = JSON.parse(rawCatalog);
+      return memoryCatalog;
     }
   } catch (err) {
     console.error('Error reading catalog file:', err.message);
   }
-  return [];
+  memoryCatalog = [];
+  return memoryCatalog;
 }
 
 function saveProductsData(data) {
-  const dir = path.dirname(catalogPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  memoryCatalog = data;
+  try {
+    const dir = path.dirname(catalogPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(catalogPath, JSON.stringify(data, null, 2), 'utf8');
+    console.log(`✅ Saved ${data.length} items to ${catalogPath}`);
+  } catch (err) {
+    console.error('Disk write error (retaining in-memory catalog):', err.message);
   }
-  fs.writeFileSync(catalogPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
 // -------------------------------------------------------------
@@ -118,7 +131,6 @@ app.post('/api/orders', (req, res) => {
 
   const products = getProductsData();
 
-  // Price verification against catalog
   let verifiedSubtotal = 0;
   const verifiedItems = items.map((cartItem) => {
     const matched = products.find((p) => String(p.id) === String(cartItem.id) || String(p.sku) === String(cartItem.id));
@@ -220,13 +232,16 @@ app.get('/api/orders', (req, res) => {
 // Admin Inventory & Catalog Control Endpoints
 // -------------------------------------------------------------
 
-// Fetch raw catalog
+// Fetch raw catalog with no-cache headers
 app.get('/api/admin/products', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     const products = getProductsData();
     res.json(products);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to read catalog file.' });
+    res.status(500).json({ error: 'Failed to read catalog data.' });
   }
 });
 
@@ -238,7 +253,7 @@ app.put('/api/admin/products/raw', requireAdmin, (req, res) => {
       return res.status(400).json({ error: 'Payload must be a JSON array of products.' });
     }
     saveProductsData(updatedData);
-    res.json({ success: true, message: 'Inventory JSON updated successfully!' });
+    res.json({ success: true, message: 'Inventory synced live!', count: updatedData.length });
   } catch (err) {
     res.status(500).json({ error: 'Failed to write catalog file.' });
   }

@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Production Render Backend URL fallback
   const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://baitul-manal-1.onrender.com'; // Adjust if your Web Service name differs
+    : 'https://baitul-manal-1.onrender.com'[cite: 3];
 
   let catalog = [];
   let ordersList = [];
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inventoryGrid = document.getElementById('inventoryGridContainer');
 
   // Check persisted session token
-  const token = localStorage.getItem('bm_admin_token');
+  const token = localStorage.getItem('bm_admin_token')[cite: 3];
   if (token) {
     unlockPortal();
   }
@@ -46,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gateError.textContent = data.message || 'Invalid Admin Password.';
       }
     } catch (e) {
-      gateError.textContent = 'Failed to connect to backend service. (Wake up in progress...)';
+      gateError.textContent = 'Failed to connect to backend service. (Server may be waking up...)';
     }
   }
 
@@ -61,10 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
     await Promise.all([loadCatalog(), loadOrders()]);
   }
 
-  // Fetch Catalog
+  // Fetch Catalog with Cache-Buster
   async function loadCatalog() {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products`);
+      const res = await fetch(`${API_BASE}/api/admin/products?t=${new Date().getTime()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       catalog = await res.json();
       renderInventoryGrid();
       renderRawJson();
