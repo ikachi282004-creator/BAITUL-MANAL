@@ -1,19 +1,22 @@
-/**
- * BAITUL MANAL — SQLite Database Connector
- */
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'orders.db');
+const dbDir = path.resolve(__dirname);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'boutique.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('❌ Could not connect to SQLite database:', err.message);
+    console.error('❌ Failed to open SQLite database:', err.message);
   } else {
-    console.log(' Connected to SQLite database: orders.db');
+    console.log(`📦 SQLite Connected at: ${dbPath}`);
   }
 });
 
-// Setup orders table
+// Auto-initialize orders table
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -31,7 +34,13 @@ db.serialize(() => {
       fulfillment_status TEXT DEFAULT 'PENDING_DISPATCH',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, (err) => {
+    if (err) {
+      console.error('❌ Error creating orders table:', err.message);
+    } else {
+      console.log('✅ Orders table ready & verified.');
+    }
+  });
 });
 
 module.exports = db;
