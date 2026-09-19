@@ -7301,3 +7301,27 @@ a[href^="tel:"],
   padding: 0 4px;
   line-height: 1;
 }
+/* ==========================================================================
+   MOBILE DOCK & FLOATING BUTTONS NON-OVERLAP FIX
+   ========================================================================== */
+@media (max-width: 991px) {
+  /* Lift standalone WhatsApp float button above the 64px bottom dock */
+  .whatsapp-float {
+    bottom: 80px !important;
+    right: 16px !important;
+    z-index: 980 !important;
+  }
+
+  /* If using the floating action deck (scroll top + WhatsApp pulse) */
+  .floating-action-deck,
+  #floatingDeck {
+    bottom: 80px !important;
+    right: 16px !important;
+    z-index: 980 !important;
+  }
+
+  /* Make sure the bottom dock stays clean and elevated above page elements */
+  .mobile-sticky-dock {
+    z-index: 999 !important;
+  }
+}
