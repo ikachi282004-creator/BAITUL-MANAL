@@ -7649,3 +7649,70 @@ a[href^="tel:"],
     letter-spacing: 1.2px !important;
   }
 }
+/* =========================================================================
+   MOBILE HEADER & BOTTOM DOCK POLISH
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* 1. Header action items: hide wishlist & profile from top header to leave only Search & Bag */
+  .site-header__actions a[href*="wishlist"],
+  .site-header__actions a[href*="my-profile"],
+  .site-header__actions a[href*="profile"],
+  .header__actions a[href*="wishlist"],
+  .header__actions a[href*="my-profile"],
+  .header__actions a[href*="profile"] {
+    display: none !important;
+  }
+
+  /* 2. Streamline header layout so Logo, Menu and Cart have breathing room */
+  .site-header__inner {
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .site-header__actions {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+
+  /* 3. Refine the bottom mobile dock to 4 balanced columns */
+  .mobile-dock,
+  .dock-nav,
+  nav.mobile-dock-nav {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    align-items: center !important;
+    height: 56px !important;
+    padding: 4px 0 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e8e2d8 !important;
+  }
+
+  .dock-nav-item,
+  .mobile-dock a {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.70rem !important;
+    font-weight: 600 !important;
+    color: #5a5146 !important;
+    text-decoration: none !important;
+    gap: 3px !important;
+  }
+
+  .dock-nav-item svg,
+  .mobile-dock a svg {
+    width: 17px !important;
+    height: 17px !important;
+    stroke: #181512 !important;
+  }
+
+  /* Noticeable gold touch on the Account icon in the dock */
+  .dock-nav-item:last-child svg,
+  .mobile-dock a[href*="profile"] svg {
+    stroke: #c5a880 !important;
+  }
+}
