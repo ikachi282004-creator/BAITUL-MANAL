@@ -520,16 +520,20 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openCartDrawer = function () {
     window.renderCartDrawerItems();
     cartDrawer?.classList.add('active');
+    cartDrawer?.setAttribute('aria-hidden', 'false');
     cartOverlay?.classList.add('active');
+    document.body.classList.add('drawer-open');
     document.body.style.overflow = 'hidden';
   };
 
   window.closeCartDrawer = function () {
     cartDrawer?.classList.remove('active');
+    cartDrawer?.setAttribute('aria-hidden', 'true');
     cartOverlay?.classList.remove('active');
+    document.body.classList.remove('drawer-open');
     document.body.style.overflow = '';
   };
-
+  
   document.addEventListener('click', (e) => {
     const bagTrigger = e.target.closest('#headerCartBtn, #dockCartBtn, .cart-pill-btn, [data-open-drawer="cart"]');
     if (bagTrigger) {
