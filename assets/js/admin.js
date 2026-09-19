@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let catalog = [];
   let ordersList = [];
+  let vaultOrders = [];
 
   const gateCard = document.getElementById('gateCard');
   const dashboardView = document.getElementById('dashboardView');
@@ -19,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     unlockPortal();
   }
 
-  loginBtn.addEventListener('click', handleLogin);
-  adminPasswordInput.addEventListener('keypress', (e) => {
+  loginBtn?.addEventListener('click', handleLogin);
+  adminPasswordInput?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleLogin();
   });
 
@@ -59,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
     await Promise.all([loadCatalog(), loadOrders()]);
   }
 
+  // =========================================================================
+  // 1. CATALOG ENGINE
+  // =========================================================================
   async function loadCatalog() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/products?t=${new Date().getTime()}`, {
@@ -322,7 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Interactive Live Stage Selector in Dispatches View
+  // =========================================================================
+  // 2. DISPATCHES & ORDERS ENGINE
+  // =========================================================================
   async function loadOrders() {
     const tbody = document.getElementById('ordersTableBody');
     if (tbody) {
@@ -351,20 +357,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${o.paymentMethod || 'K-Net'}</td>
           <td><strong>KD ${Number(o.total || 0).toFixed(3)}</strong></td>
           <td>
-            <!-- Interactive Stage Selector -->
             ${o.status === 'CANCELLED' ? `
-  <div style="display:inline-flex; align-items:center; gap:6px; background: rgba(231,76,60,0.15); border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 12px; border-radius: 4px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">
-    <span>🔒 Cancelled (Locked)</span>
-  </div>
-` : `
-  <select class="admin-status-dropdown" data-order-id="${o.orderId}" style="background: #181512; color: #c5a880; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; outline: none;">
-    <option value="PENDING_DISPATCH" ${o.status === 'PENDING_DISPATCH' ? 'selected' : ''}>🟡 Pending Dispatch</option>
-    <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>🟠 Atelier Tailoring</option>
-    <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>🔵 Out for Delivery</option>
-    <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>🟢 Delivered</option>
-    <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
-  </select>
-`}
+              <div style="display:inline-flex; align-items:center; gap:6px; background: rgba(231,76,60,0.15); border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 12px; border-radius: 4px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">
+                <span>🔒 Cancelled (Locked)</span>
+              </div>
+            ` : `
+              <select class="admin-status-dropdown" data-order-id="${o.orderId}" style="background: #181512; color: #c5a880; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 4px; padding: 6px 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; outline: none;">
+                <option value="PENDING_DISPATCH" ${o.status === 'PENDING_DISPATCH' ? 'selected' : ''}>🟡 Pending Dispatch</option>
+                <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>🟠 Atelier Tailoring</option>
+                <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>🔵 Out for Delivery</option>
+                <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>🟢 Delivered</option>
+                <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>🔴 Cancelled</option>
+              </select>
+            `}
           </td>
         </tr>
       `).join('');
@@ -389,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
               setTimeout(() => {
                 e.target.style.border = '1px solid rgba(197, 168, 128, 0.4)';
                 e.target.style.opacity = '1';
+                loadOrders(); // Refresh table state
               }, 600);
             } else {
               alert(patchData.error || 'Failed to update order status.');
@@ -409,15 +415,182 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // =========================================================================
+  // 3. PERMANENT MASTER VAULT & CUSTOMER DIRECTORY ENGINE
+  // =========================================================================
+  const vaultTableBody = document.getElementById('vaultTableBody');
+  const vaultSearchInput = document.getElementById('vaultSearchInput');
+  const vaultStatusFilter = document.getElementById('vaultStatusFilter');
+  const vaultSortSelect = document.getElementById('vaultSortSelect');
+  const exportVaultCsvBtn = document.getElementById('exportVaultCsvBtn');
+
+  async function loadVaultData() {
+    if (!vaultTableBody) return;
+    vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#c5a880; padding:24px;">Synchronizing permanent ledger...</td></tr>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/orders?t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      vaultOrders = await res.json();
+      renderVaultTable();
+    } catch (e) {
+      vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c; padding:24px;">Failed to load master ledger records.</td></tr>';
+    }
+  }
+
+  function renderVaultTable() {
+    if (!vaultTableBody) return;
+
+    let filtered = [...vaultOrders];
+    const query = vaultSearchInput?.value.trim().toLowerCase() || '';
+    const statusVal = vaultStatusFilter?.value || 'ALL';
+    const sortVal = vaultSortSelect?.value || 'newest';
+
+    // 1. Filter by text (Order ID, Name, Phone, Address)
+    if (query) {
+      filtered = filtered.filter(o => {
+        const idMatch = (o.orderId || '').toLowerCase().includes(query);
+        const nameMatch = (o.recipient?.name || '').toLowerCase().includes(query);
+        const phoneMatch = (o.recipient?.phone || '').includes(query);
+        const addrMatch = (o.recipient?.address || '').toLowerCase().includes(query);
+        return idMatch || nameMatch || phoneMatch || addrMatch;
+      });
+    }
+
+    // 2. Filter by status
+    if (statusVal !== 'ALL') {
+      filtered = filtered.filter(o => (o.status || 'PENDING_DISPATCH') === statusVal);
+    }
+
+    // 3. Sort orders
+    if (sortVal === 'newest') {
+      filtered.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    } else if (sortVal === 'oldest') {
+      filtered.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+    } else if (sortVal === 'highest') {
+      filtered.sort((a, b) => Number(b.total || 0) - Number(a.total || 0));
+    }
+
+    if (!filtered.length) {
+      vaultTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8c8173; padding:30px;">No matching records found in master vault.</td></tr>';
+      return;
+    }
+
+    const STATUS_BADGES = {
+      'PENDING_DISPATCH': { label: '🟡 PENDING', color: '#b78103', bg: 'rgba(241,196,15,0.1)' },
+      'PROCESSING': { label: '🟠 TAILORING', color: '#d35400', bg: 'rgba(230,126,34,0.1)' },
+      'OUT_FOR_DELIVERY': { label: '🔵 COURIER', color: '#2980b9', bg: 'rgba(52,152,219,0.1)' },
+      'DELIVERED': { label: '🟢 DELIVERED', color: '#27ae60', bg: 'rgba(39,174,96,0.1)' },
+      'CANCELLED': { label: '🔴 CANCELLED', color: '#c0392b', bg: 'rgba(231,76,60,0.1)' }
+    };
+
+    vaultTableBody.innerHTML = filtered.map(o => {
+      const st = o.status || 'PENDING_DISPATCH';
+      const badge = STATUS_BADGES[st] || STATUS_BADGES['PENDING_DISPATCH'];
+      const rawItems = Array.isArray(o.items) ? o.items : [];
+      const garmentsList = rawItems.map(i => `• ${i.name || i.id} (${i.size || 'M'}) x${i.qty || 1}`).join('<br>');
+      const orderDate = o.date ? new Date(o.date).toLocaleString('en-GB') : 'Unknown';
+
+      return `
+        <tr style="border-bottom: 1px solid rgba(197, 168, 128, 0.15);">
+          <td style="padding: 12px 16px;">
+            <strong style="color: #c5a880; font-family: monospace;">${o.orderId}</strong><br>
+            <small style="color: #8c8173;">${orderDate}</small>
+          </td>
+
+          <td style="padding: 12px 16px;">
+            <strong style="color: #fff;">${o.recipient?.name || 'Customer'}</strong><br>
+            <span style="color: #c5a880; font-size: 0.8rem;">🇰🇼 ${o.recipient?.phone || ''}</span>
+            ${o.recipient?.email ? `<br><small style="color: #8c8173;">${o.recipient.email}</small>` : ''}
+          </td>
+
+          <td style="padding: 12px 16px; color: #d6cbba; max-width: 220px; word-break: break-word;">
+            <strong style="color: #fff; font-size: 0.8rem;">${o.recipient?.governorate || ''}</strong><br>
+            <span style="font-size: 0.78rem; color: #a0978b;">${o.recipient?.address || ''}</span>
+          </td>
+
+          <td style="padding: 12px 16px; color: #d6cbba; font-size: 0.8rem; line-height: 1.4;">
+            ${garmentsList || 'Standard Order'}
+          </td>
+
+          <td style="padding: 12px 16px; color: #fff; font-weight: 600;">
+            ${o.paymentMethod || 'COD'}
+          </td>
+
+          <td style="padding: 12px 16px; color: #c5a880; font-weight: 800; font-size: 0.95rem;">
+            KD ${Number(o.total || 0).toFixed(3)}
+          </td>
+
+          <td style="padding: 12px 16px;">
+            <span style="display: inline-block; background: ${badge.bg}; color: ${badge.color}; border: 1px solid ${badge.color}; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
+              ${badge.label}
+            </span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  vaultSearchInput?.addEventListener('input', renderVaultTable);
+  vaultStatusFilter?.addEventListener('change', renderVaultTable);
+  vaultSortSelect?.addEventListener('change', renderVaultTable);
+
+  exportVaultCsvBtn?.addEventListener('click', () => {
+    if (!vaultOrders.length) {
+      alert('No orders available to export.');
+      return;
+    }
+
+    const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Governorate', 'Full Address', 'Payment', 'Total (KD)', 'Status', 'Items'];
+    const rows = vaultOrders.map(o => {
+      const itemsStr = (o.items || []).map(i => `${i.name || i.id} (${i.size || 'M'} x${i.qty || 1})`).join(' | ');
+      return [
+        `"${o.orderId}"`,
+        `"${o.date || ''}"`,
+        `"${(o.recipient?.name || '').replace(/"/g, '""')}"`,
+        `"${o.recipient?.phone || ''}"`,
+        `"${o.recipient?.email || ''}"`,
+        `"${o.recipient?.governorate || ''}"`,
+        `"${(o.recipient?.address || '').replace(/"/g, '""')}"`,
+        `"${o.paymentMethod || 'COD'}"`,
+        `"${Number(o.total || 0).toFixed(3)}"`,
+        `"${o.status || 'PENDING_DISPATCH'}"`,
+        `"${itemsStr.replace(/"/g, '""')}"`
+      ];
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Baitul_Manal_Master_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // =========================================================================
+  // 4. TAB NAVIGATION ROUTER
+  // =========================================================================
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      document.getElementById('paneInventory').style.display = tab === 'inventory' ? 'block' : 'none';
-      document.getElementById('paneOrders').style.display = tab === 'orders' ? 'block' : 'none';
-      document.getElementById('paneRawJson').style.display = tab === 'raw-json' ? 'block' : 'none';
+
+      const pInv = document.getElementById('paneInventory');
+      const pOrd = document.getElementById('paneOrders');
+      const pRaw = document.getElementById('paneRawJson');
+      const pVlt = document.getElementById('paneVault');
+
+      if (pInv) pInv.style.display = tab === 'inventory' ? 'block' : 'none';
+      if (pOrd) pOrd.style.display = tab === 'orders' ? 'block' : 'none';
+      if (pRaw) pRaw.style.display = tab === 'raw-json' ? 'block' : 'none';
+      if (pVlt) pVlt.style.display = tab === 'vault' ? 'block' : 'none';
+
       if (tab === 'orders') loadOrders();
+      if (tab === 'vault') loadVaultData();
     });
   });
 

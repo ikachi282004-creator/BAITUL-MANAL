@@ -260,6 +260,7 @@
       <div class="tabs">
         <button class="tab-btn active" data-tab="inventory">Live Catalog Grid</button>
         <button class="tab-btn" data-tab="orders">Customer Dispatches</button>
+        <button class="tab-btn" data-tab="vault">🔒 Permanent Master Vault & Directory</button>
         <button class="tab-btn" data-tab="raw-json">Raw products.json</button>
       </div>
 
@@ -301,6 +302,69 @@
           <tbody id="ordersTableBody"></tbody>
         </table>
       </div>
+      <!-- Pane 4: Permanent Master Archive & Customer Directory -->
+<section id="paneVault" class="admin-pane" style="display: none; padding: 20px 0;">
+  
+  <div style="background: #181512; border: 1px solid rgba(197, 168, 128, 0.3); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-family: 'Playfair Display', serif; color: #c5a880; margin: 0 0 4px; font-size: 1.4rem;">
+          Permanent Customer & Order Vault
+        </h2>
+        <p style="color: #8c8173; margin: 0; font-size: 0.85rem;">
+          Permanent historical ledger. All customer credentials, order histories, and transactions are preserved here.
+        </p>
+      </div>
+
+      <button type="button" id="exportVaultCsvBtn" style="background: #27ae60; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+        📥 Export All to CSV / Excel
+      </button>
+    </div>
+
+    <!-- Live Search, Filter & Sort Bar -->
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; background: #12100e; padding: 12px; border-radius: 8px; border: 1px solid rgba(214,203,186,0.15);">
+      <input type="text" id="vaultSearchInput" placeholder="Search by name, phone (+965), or order ID..." 
+        style="flex: 2; min-width: 200px; background: #181512; border: 1px solid rgba(197,168,128,0.3); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 0.88rem; outline: none;">
+
+      <select id="vaultStatusFilter" style="flex: 1; min-width: 140px; background: #181512; border: 1px solid rgba(197,168,128,0.3); color: #c5a880; padding: 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; outline: none;">
+        <option value="ALL">All Statuses</option>
+        <option value="PENDING_DISPATCH">🟡 Pending Dispatch</option>
+        <option value="PROCESSING">🟠 Atelier Tailoring</option>
+        <option value="OUT_FOR_DELIVERY">🔵 Out for Delivery</option>
+        <option value="DELIVERED">🟢 Delivered</option>
+        <option value="CANCELLED">🔴 Cancelled</option>
+      </select>
+
+      <select id="vaultSortSelect" style="flex: 1; min-width: 140px; background: #181512; border: 1px solid rgba(197,168,128,0.3); color: #c5a880; padding: 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; outline: none;">
+        <option value="newest">Sort: Newest First</option>
+        <option value="oldest">Sort: Oldest First</option>
+        <option value="highest">Sort: Highest Total (KD)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Vault Data Table -->
+  <div style="overflow-x: auto; background: #181512; border: 1px solid rgba(197, 168, 128, 0.2); border-radius: 10px;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem;">
+      <thead>
+        <tr style="border-bottom: 1px solid rgba(197, 168, 128, 0.3); background: #12100e; color: #c5a880; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
+          <th style="padding: 14px 16px;">Order & Date</th>
+          <th style="padding: 14px 16px;">Customer & Contact</th>
+          <th style="padding: 14px 16px;">Full Delivery Address</th>
+          <th style="padding: 14px 16px;">Garments Purchased</th>
+          <th style="padding: 14px 16px;">Gateway</th>
+          <th style="padding: 14px 16px;">Total</th>
+          <th style="padding: 14px 16px;">Status</th>
+        </tr>
+      </thead>
+      <tbody id="vaultTableBody">
+        <tr>
+          <td colspan="7" style="text-align: center; color: #8c8173; padding: 30px;">Loading archive records...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
       <!-- RAW JSON TAB -->
       <div id="paneRawJson" style="display: none;">
